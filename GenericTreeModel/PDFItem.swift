@@ -9,9 +9,10 @@ import SwiftUI
 
 @Model
 final class PDFItem: TreeItem {
-    var id = UUID()
+    @Attribute(.unique) var id: UUID = UUID()
     var name: String
     var icon: String
+    
     @Relationship(deleteRule: .cascade, inverse: \PDFItem.parent)
     var children: [PDFItem]?
     var parent: PDFItem?
