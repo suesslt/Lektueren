@@ -8,13 +8,16 @@ import SwiftUI
 
 struct TreeContentView<VM: TreeViewModel>: View {
     @ObservedObject var viewModel: VM
-    
+    @State private var selection: VM.Item?
+
     var body: some View {
-        // Die reine Liste mit Baum-Funktionalität
-        List(viewModel.rootFolders, children: \.children, selection: $viewModel.selectedFolder) { item in
+        List(viewModel.rootFolders, children: \.children, selection: $selection) { item in
             NavigationLink(value: item) {
                 Label(item.name, systemImage: item.icon)
             }
+        }
+        .onChange(of: selection) { _, newValue in
+            viewModel.selectedFolder = newValue
         }
     }
 }
