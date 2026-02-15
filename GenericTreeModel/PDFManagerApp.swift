@@ -30,12 +30,3 @@ struct PDFManagerApp: App {
         .modelContainer(sharedModelContainer)
     }
 }
-
-// Ergänzung zum vorherigen TripleColumnLayout für die Detail-Spalte:
-// detail: {
-//    if let item = viewModel.selectedDetailItem {
-//        GenericDetailView(item: item)
-//    } else {
-//        ContentUnavailableView("Keine Auswahl", systemImage: "pdf")
-//    }
-// }
