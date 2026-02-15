@@ -1,3 +1,4 @@
+import SwiftData
 //
 //  PDFItem.swift
 //  GenericTreeModel
@@ -6,14 +7,35 @@
 //
 import SwiftUI
 
-struct PDFItem: TreeItem {
-    let id = UUID()
-    let name: String
-    let icon: String
-    var children: [PDFItem]? // Für Unterordner
-    
+@Model
+final class PDFItem: TreeItem {
+    var id = UUID()
+    var name: String
+    var icon: String
+    @Relationship(deleteRule: .cascade, inverse: \PDFItem.parent)
+    var children: [PDFItem]?
+    var parent: PDFItem?
+
     // Detail-Spezifische Felder
     var fileSize: String = "0 KB"
     var lastModified: Date = Date()
     var pdfUrl: URL? = nil
+
+    init(
+        name: String,
+        icon: String,
+        children: [PDFItem]? = nil,
+        parent: PDFItem? = nil,
+        fileSize: String = "0 KB",
+        lastModified: Date = Date(),
+        pdfUrl: URL? = nil
+    ) {
+        self.name = name
+        self.icon = icon
+        self.children = children
+        self.parent = parent
+        self.fileSize = fileSize
+        self.lastModified = lastModified
+        self.pdfUrl = pdfUrl
+    }
 }
