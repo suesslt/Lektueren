@@ -6,7 +6,7 @@
 //
 import Foundation
 
-protocol TreeItem: AnyObject {
+protocol TreeFolder {
     var id: UUID { get }
     var name: String { get }
     var icon: String { get }
@@ -14,7 +14,7 @@ protocol TreeItem: AnyObject {
     var treeChildren: [Self]? { get }
 }
 
-extension TreeItem {
+extension TreeFolder {
     /// Gibt `nil` zurück wenn keine Kinder vorhanden sind,
     /// damit SwiftUI kein Expand-Icon für leere Arrays anzeigt.
     var treeChildren: [Self]? {

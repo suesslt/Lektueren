@@ -6,7 +6,7 @@
 //
 import SwiftUI
 
-struct TripleColumnLayout<ViewModel: TreeViewModel, Detail: View>: View where ViewModel.Item: TreeItem {
+struct TripleColumnLayout<ViewModel: TreeViewModel, Detail: View>: View where ViewModel.Item: TreeFolder {
     @StateObject var viewModel: ViewModel
     @State private var columnVisibility = NavigationSplitViewVisibility.all
 
