@@ -11,15 +11,14 @@ protocol TreeItem: AnyObject {
     var name: String { get }
     var icon: String { get }
     var children: [Self]? { get }
-
-    /// Gibt `nil` zurück wenn keine Kinder vorhanden sind,
-    /// damit SwiftUI kein Expand-Icon für leere Arrays anzeigt.
     var treeChildren: [Self]? { get }
 }
+
 extension TreeItem {
+    /// Gibt `nil` zurück wenn keine Kinder vorhanden sind,
+    /// damit SwiftUI kein Expand-Icon für leere Arrays anzeigt.
     var treeChildren: [Self]? {
         guard let children, !children.isEmpty else { return nil }
         return children
     }
 }
-
