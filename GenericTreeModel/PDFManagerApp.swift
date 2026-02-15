@@ -1,15 +1,15 @@
 //
-//  GenericTreeModelApp.swift
+//  PDFManagerApp.swift
 //  GenericTreeModel
 //
 //  Created by Thomas Süssli on 15.02.2026.
 //
-
 import SwiftUI
 import SwiftData
 
 @main
-struct GenericTreeModelApp: App {
+struct PDFManagerApp: App {
+  
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Item.self,
@@ -25,8 +25,17 @@ struct GenericTreeModelApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            TripleColumnLayout(viewModel: PDFTreeViewModel())
         }
         .modelContainer(sharedModelContainer)
     }
 }
+
+// Ergänzung zum vorherigen TripleColumnLayout für die Detail-Spalte:
+// detail: {
+//    if let item = viewModel.selectedDetailItem {
+//        GenericDetailView(item: item)
+//    } else {
+//        ContentUnavailableView("Keine Auswahl", systemImage: "pdf")
+//    }
+// }
