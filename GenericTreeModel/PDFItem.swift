@@ -6,7 +6,7 @@
 //
 import SwiftUI
 
-struct PDFItem: DetailDisplayable {
+struct PDFItem: TreeItem {
     let id = UUID()
     let name: String
     let icon: String
