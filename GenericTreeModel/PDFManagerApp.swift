@@ -25,7 +25,9 @@ struct PDFManagerApp: App {
 
     var body: some Scene {
         WindowGroup {
-            TripleColumnLayout(viewModel: PDFTreeViewModel())
+            TripleColumnLayout(viewModel: PDFTreeViewModel()) { item in
+                PDFDetailView(item: item)
+            }
         }
         .modelContainer(sharedModelContainer)
     }

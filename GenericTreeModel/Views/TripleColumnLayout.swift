@@ -6,9 +6,16 @@
 //
 import SwiftUI
 
-struct TripleColumnLayout<ViewModel: TreeViewModel>: View where ViewModel.Item: TreeItem {
+struct TripleColumnLayout<ViewModel: TreeViewModel, Detail: View>: View where ViewModel.Item: TreeItem {
     @StateObject var viewModel: ViewModel
     @State private var columnVisibility = NavigationSplitViewVisibility.all
+
+    let detail: (ViewModel.Item) -> Detail
+
+    init(viewModel: ViewModel, @ViewBuilder detail: @escaping (ViewModel.Item) -> Detail) {
+        _viewModel = StateObject(wrappedValue: viewModel)
+        self.detail = detail
+    }
 
     var body: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
@@ -18,7 +25,7 @@ struct TripleColumnLayout<ViewModel: TreeViewModel>: View where ViewModel.Item: 
             TreeFolderDetailList(viewModel: viewModel)
         } detail: {
             if let item = viewModel.selectedDetailItem {
-                PDFDetailView(item: item)
+                detail(item)
             } else {
                 Text("Bitte wählen Sie ein Element aus.")
             }
