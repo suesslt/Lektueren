@@ -7,10 +7,10 @@
 import SwiftUI
 
 struct TreeContentView<VM: TreeViewModel>: View
-    where VM.Folder: Hashable
-{
+where VM.Folder: Hashable {
     @State var viewModel: VM
     @State private var selection: VM.Folder?
+    @State private var isAddingFolder = false
 
     var body: some View {
         List(viewModel.rootFolders, children: \.subfolders, selection: $selection) { folder in
@@ -21,6 +21,67 @@ struct TreeContentView<VM: TreeViewModel>: View
         .onChange(of: selection) { _, newValue in
             viewModel.selectedFolder = newValue
         }
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button {
+                    isAddingFolder = true
+                } label: {
+                    Label("Neuer Ordner", systemImage: "folder.badge.plus")
+                }
+            }
+        }
+        .sheet(isPresented: $isAddingFolder) {
+            AddFolderView(
+                parentFolder: viewModel.selectedFolder,
+                onCreate: { name in
+                    viewModel.addFolder(name: name, parent: viewModel.selectedFolder)
+                }
+            )
+        }
     }
 }
 
+// MARK: - AddFolderView
+
+private struct AddFolderView<Folder: TreeFolder & Hashable>: View {
+    let parentFolder: Folder?
+    let onCreate: (String) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var folderName = ""
+    @FocusState private var isTextFieldFocused: Bool
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("Ordnername", text: $folderName)
+                        .focused($isTextFieldFocused)
+                } header: {
+                    if let parent = parentFolder {
+                        Text("Unterordner in \"\(parent.name)\"")
+                    } else {
+                        Text("Neuer Root-Ordner")
+                    }
+                }
+            }
+            .navigationTitle("Ordner erstellen")
+            #if os(iOS) || targetEnvironment(macCatalyst)
+                .navigationBarTitleDisplayMode(.inline)
+            #endif
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Abbrechen") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Erstellen") {
+                        onCreate(folderName)
+                        dismiss()
+                    }
+                    .disabled(folderName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+            .onAppear { isTextFieldFocused = true }
+        }
+    }
+}

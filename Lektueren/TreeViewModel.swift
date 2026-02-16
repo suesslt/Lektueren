@@ -16,4 +16,8 @@ protocol TreeViewModel: AnyObject {
     var rootFolders: [Folder] { get }
     var selectedFolder: Folder? { get set }
     var selectedDetailItem: Leaf? { get set }
+
+    /// Erstellt einen neuen Folder mit dem angegebenen Namen.
+    /// Wenn `parent` nil ist, wird ein Root-Folder angelegt.
+    func addFolder(name: String, parent: Folder?)
 }

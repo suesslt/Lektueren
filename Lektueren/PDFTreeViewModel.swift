@@ -21,7 +21,7 @@ class PDFTreeViewModel: TreeViewModel {
     var selectedDetailItem: PDFItem?
 
     private let modelContext: ModelContext
-    nonisolated(unsafe) private var notificationTask: Task<Void, Never>?
+    private nonisolated(unsafe) var notificationTask: Task<Void, Never>?
 
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
@@ -33,7 +33,7 @@ class PDFTreeViewModel: TreeViewModel {
         notificationTask?.cancel()
     }
 
-    // MARK: - Fetch
+    private let allItemsFolder: PDFFolder = PDFFolder(name: "Alle Lektüren") // Ein transientes (nicht persistiertes) Pseudo-Folder, das alle Lektüren aggregiert darstellt.
 
     func fetchRootFolders() {
         var descriptor = FetchDescriptor<PDFFolder>(
@@ -41,10 +41,17 @@ class PDFTreeViewModel: TreeViewModel {
             sortBy: [SortDescriptor(\.name)]
         )
         descriptor.relationshipKeyPathsForPrefetching = [\.subfolders, \.items]
-        rootFolders = (try? modelContext.fetch(descriptor)) ?? []
+        let fetched = (try? modelContext.fetch(descriptor)) ?? []
+        rootFolders = [allItemsFolder] + fetched
     }
 
-    // MARK: - Live-Updates
+    func addFolder(name: String, parent: PDFFolder?) {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        let newFolder = PDFFolder(name: trimmed, parent: parent)
+        modelContext.insert(newFolder)
+        try? modelContext.save()
+    }
 
     private func observeStoreChanges() {
         notificationTask = Task { [weak self] in
