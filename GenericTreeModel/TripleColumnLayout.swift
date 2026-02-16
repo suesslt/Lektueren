@@ -6,13 +6,15 @@
 //
 import SwiftUI
 
-struct TripleColumnLayout<ViewModel: TreeViewModel, Detail: View>: View where ViewModel.Item: TreeItem {
-    @StateObject var viewModel: ViewModel
+struct TripleColumnLayout<VM: TreeViewModel, Detail: View>: View
+    where VM.Folder: Hashable, VM.Leaf: Hashable
+{
+    @StateObject var viewModel: VM
     @State private var columnVisibility = NavigationSplitViewVisibility.all
 
-    let detail: (ViewModel.Item) -> Detail
+    let detail: (VM.Leaf) -> Detail
 
-    init(viewModel: ViewModel, @ViewBuilder detail: @escaping (ViewModel.Item) -> Detail) {
+    init(viewModel: VM, @ViewBuilder detail: @escaping (VM.Leaf) -> Detail) {
         _viewModel = StateObject(wrappedValue: viewModel)
         self.detail = detail
     }

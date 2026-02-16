@@ -6,18 +6,20 @@
 //
 import SwiftUI
 
-struct TreeFolderDetailList<VM: TreeViewModel>: View {
+struct TreeFolderDetailList<VM: TreeViewModel>: View
+    where VM.Leaf: Hashable
+{
     @ObservedObject var viewModel: VM
-    @State private var selection: VM.Item?
+    @State private var selection: VM.Leaf?
 
     var body: some View {
-        if let selected = viewModel.selectedFolder, let children = selected.children {
-            List(children, selection: $selection) { child in
-                NavigationLink(value: child) {
-                    Text(child.name)
+        if let folder = viewModel.selectedFolder, let items = folder.children, !items.isEmpty {
+            List(items, selection: $selection) { item in
+                NavigationLink(value: item) {
+                    Label(item.name, systemImage: item.icon)
                 }
             }
-            .navigationTitle(selected.name)
+            .navigationTitle(folder.name)
             .onChange(of: selection) { _, newValue in
                 viewModel.selectedDetailItem = newValue
             }

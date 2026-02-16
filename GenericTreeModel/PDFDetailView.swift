@@ -1,25 +1,26 @@
 //
-//  GenericDetailView.swift
+//  PDFDetailView.swift
 //  GenericTreeModel
 //
 //  Created by Thomas Süssli on 15.02.2026.
 //
 import SwiftUI
 
-struct PDFDetailView<T: TreeItem>: View {
-    let item: T
+struct PDFDetailView: View {
+    let item: PDFItem
 
     var body: some View {
         VStack(spacing: 20) {
-            Image(systemName: "folder.badge.questionmark")
+            Image(systemName: item.icon)
                 .font(.system(size: 80))
-                .foregroundColor(.red)
+                .foregroundColor(.accentColor)
 
             Text(item.name)
                 .font(.title)
 
             List {
-                LabeledContent("Größe", value: "102 KB")
+                LabeledContent("Größe", value: item.fileSize)
+                LabeledContent("Zuletzt geändert", value: item.lastModified.formatted(date: .abbreviated, time: .shortened))
             }
             #if os(iOS)
                 .listStyle(.insetGrouped)
