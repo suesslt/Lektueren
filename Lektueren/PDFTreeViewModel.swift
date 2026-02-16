@@ -8,38 +8,54 @@ import SwiftUI
 import SwiftData
 
 /// Observable ViewModel, das Folder und PDFs direkt
-/// aus dem SwiftData / CloudKit Store liest.
+/// aus dem SwiftData / CloudKit Store fetcht.
+/// Der ModelContext wird bei der Initialisierung injiziert.
 @Observable
+@MainActor
 class PDFTreeViewModel: TreeViewModel {
     typealias Folder = PDFFolder
     typealias Leaf = PDFItem
 
-    var rootFolders: [PDFFolder] = []
+    private(set) var rootFolders: [PDFFolder] = []
     var selectedFolder: PDFFolder?
     var selectedDetailItem: PDFItem?
-}
 
-/// Diese View liest Folder und Items per @Query aus CloudKit/SwiftData
-/// und übergibt sie an den PDFTreeViewModel.
-struct PDFTreeDataProvider<Content: View>: View {
+    private let modelContext: ModelContext
+    nonisolated(unsafe) private var notificationTask: Task<Void, Never>?
 
-    @Query(
-        filter: #Predicate<PDFFolder> { $0.parent == nil },
-        sort: [SortDescriptor(\PDFFolder.name)]
-    )
-    private var rootFolders: [PDFFolder]
+    init(modelContext: ModelContext) {
+        self.modelContext = modelContext
+        fetchRootFolders()
+        observeStoreChanges()
+    }
 
-    @Query(sort: \PDFItem.title)
-    private var allPDFItems: [PDFItem]
+    deinit {
+        notificationTask?.cancel()
+    }
 
-    @State private var viewModel = PDFTreeViewModel()
-    let content: (PDFTreeViewModel) -> Content
+    // MARK: - Fetch
 
-    var body: some View {
-        content(viewModel)
-            .onChange(of: rootFolders, initial: true) { _, newFolders in
-                viewModel.rootFolders = newFolders
+    func fetchRootFolders() {
+        var descriptor = FetchDescriptor<PDFFolder>(
+            predicate: #Predicate { $0.parent == nil },
+            sortBy: [SortDescriptor(\.name)]
+        )
+        descriptor.relationshipKeyPathsForPrefetching = [\.subfolders, \.items]
+        rootFolders = (try? modelContext.fetch(descriptor)) ?? []
+    }
+
+    // MARK: - Live-Updates
+
+    private func observeStoreChanges() {
+        notificationTask = Task { [weak self] in
+            // Lauscht auf alle SwiftData-Änderungen im zugehörigen ModelContainer.
+            let notifications = NotificationCenter.default.notifications(
+                named: ModelContext.didSave
+            )
+            for await _ in notifications {
+                self?.fetchRootFolders()
             }
+        }
     }
 }
 

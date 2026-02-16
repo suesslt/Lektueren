@@ -33,14 +33,23 @@ struct PDFManagerApp: App {
 
     var body: some Scene {
         WindowGroup {
-            // PDFTreeDataProvider liest Folder + Items per @Query,
-            // aktualisiert den ViewModel und gibt ihn an den Layout-View weiter.
-            PDFTreeDataProvider { viewModel in
-                TripleColumnLayout(viewModel: viewModel) { item in
-                    PDFDetailView(item: item)
-                }
-            }
+            PDFRootView(modelContext: sharedModelContainer.mainContext)
         }
         .modelContainer(sharedModelContainer)
     }
 }
+/// Einstiegspunkt, der den ViewModel mit dem MainContext initialisiert.
+private struct PDFRootView: View {
+    @State private var viewModel: PDFTreeViewModel
+
+    init(modelContext: ModelContext) {
+        _viewModel = State(wrappedValue: PDFTreeViewModel(modelContext: modelContext))
+    }
+
+    var body: some View {
+        TripleColumnLayout(viewModel: viewModel) { item in
+            PDFDetailView(item: item)
+        }
+    }
+}
+
