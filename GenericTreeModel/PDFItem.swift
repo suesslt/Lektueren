@@ -8,14 +8,11 @@ import SwiftData
 import SwiftUI
 
 @Model
-final class PDFItem: TreeFolder {
+final class PDFItem {
     @Attribute(.unique) var id: UUID = UUID()
     var name: String
-    var icon: String
-    
-    @Relationship(deleteRule: .cascade, inverse: \PDFItem.parent)
-    var children: [PDFItem]?
-    var parent: PDFItem?
+    @Relationship
+    var folder: TreeFolder?
 
     // Detail-Spezifische Felder
     var fileSize: String = "0 KB"
@@ -25,16 +22,13 @@ final class PDFItem: TreeFolder {
     init(
         name: String,
         icon: String,
-        children: [PDFItem]? = nil,
-        parent: PDFItem? = nil,
+        parent: TreeFolder? = nil,
         fileSize: String = "0 KB",
         lastModified: Date = Date(),
         pdfUrl: URL? = nil
     ) {
         self.name = name
-        self.icon = icon
-        self.children = children
-        self.parent = parent
+        self.folder = folder
         self.fileSize = fileSize
         self.lastModified = lastModified
         self.pdfUrl = pdfUrl

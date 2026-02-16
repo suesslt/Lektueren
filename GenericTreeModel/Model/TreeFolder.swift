@@ -5,10 +5,27 @@
 //  Created by Thomas Süssli on 15.02.2026.
 //
 import Foundation
+import SwiftData
 
-protocol TreeFolder {
-    var id: UUID { get }
-    var name: String { get }
-    var icon: String { get }
-    var children: [Self]? { get }
+@Model
+final class TreeFolder {
+    @Attribute(.unique) var id: UUID = UUID()
+    var name: String
+    var icon: String
+    
+    @Relationship(deleteRule: .cascade, inverse: \TreeFolder.parent)
+    var children: [TreeFolder]? = nil
+    var parent: TreeFolder?
+    
+    init(
+        name: String,
+        icon: String,
+        children: [TreeFolder]? = nil,
+        parent: TreeFolder? = nil,
+    ) {
+        self.name = name
+        self.icon = icon
+        self.children = children
+        self.parent = parent
+    }
 }
