@@ -8,7 +8,7 @@ import SwiftUI
 import SwiftData
 
 @Model
-final class PDFFolder: TreeFolderItem {
+final class PDFFolder: TreeFolder {
     @Attribute(.unique) var id: UUID = UUID()
     var name: String
     var icon: String

@@ -8,8 +8,8 @@
 import Combine
 
 protocol TreeViewModel: ObservableObject {
-    associatedtype Folder: TreeFolderItem & Hashable & Identifiable
-    associatedtype Leaf: TreeLeafItem & Hashable & Identifiable
+    associatedtype Folder: TreeFolder & Hashable & Identifiable
+    associatedtype Leaf: TreeItem & Hashable & Identifiable
         where Folder.Leaf == Leaf
 
     var rootFolders: [Folder] { get }

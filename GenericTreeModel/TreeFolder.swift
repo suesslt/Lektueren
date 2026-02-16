@@ -6,8 +6,8 @@
 //
 import Foundation
 
-protocol TreeFolderItem {
-    associatedtype Leaf: TreeLeafItem
+protocol TreeFolder {
+    associatedtype Leaf: TreeItem
     var id: UUID { get }
     var name: String { get }
     var icon: String { get }
