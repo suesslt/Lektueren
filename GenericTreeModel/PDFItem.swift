@@ -14,8 +14,7 @@ final class PDFItem: TreeItem {
     var fileName: String
     var author: String?
     var pageCount: Int
-    var icon: String = "doc.richtext"
-    var fileSize: String = "0 KB"
+    var fileSize: String
     var lastModified: Date = Date()
     var pdfUrl: URL? = nil
 
@@ -27,7 +26,6 @@ final class PDFItem: TreeItem {
         fileName: String = "",
         author: String = "",
         pageCount: Int = 0,
-        icon: String = "doc.richtext",
         fileSize: String = "0 KB",
         lastModified: Date = Date(),
         pdfUrl: URL? = nil
@@ -36,7 +34,6 @@ final class PDFItem: TreeItem {
         self.fileName = fileName
         self.author = author
         self.pageCount = pageCount
-        self.icon = icon
         self.fileSize = fileSize
         self.lastModified = lastModified
         self.pdfUrl = pdfUrl

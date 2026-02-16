@@ -11,7 +11,7 @@ struct PDFDetailView: View {
 
     var body: some View {
         VStack(spacing: 20) {
-            Image(systemName: item.icon)
+            Image(systemName: "doc.richtext")
                 .font(.system(size: 80))
                 .foregroundColor(.accentColor)
 
