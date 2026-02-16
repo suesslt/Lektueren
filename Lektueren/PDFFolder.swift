@@ -11,7 +11,7 @@ import SwiftData
 final class PDFFolder: TreeFolder {
     var id: UUID = UUID()
     var name: String = ""
-    var icon: String = "folder.fill"
+    @Transient var icon: String = "folder"
     @Relationship(deleteRule: .nullify, inverse: \PDFItem.folder)
     var items: [PDFItem]?
     var parent: PDFFolder?

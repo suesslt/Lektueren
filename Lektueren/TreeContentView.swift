@@ -51,12 +51,17 @@ private struct AddFolderView<Folder: TreeFolder & Hashable>: View {
     @State private var folderName = ""
     @FocusState private var isTextFieldFocused: Bool
 
+    private var trimmedName: String {
+        folderName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     var body: some View {
         NavigationStack {
             Form {
                 Section {
                     TextField("Ordnername", text: $folderName)
                         .focused($isTextFieldFocused)
+                        .onSubmit(submit)
                 } header: {
                     if let parent = parentFolder {
                         Text("Unterordner in \"\(parent.name)\"")
@@ -67,21 +72,25 @@ private struct AddFolderView<Folder: TreeFolder & Hashable>: View {
             }
             .navigationTitle("Ordner erstellen")
             #if os(iOS) || targetEnvironment(macCatalyst)
-                .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.inline)
             #endif
+            .interactiveDismissDisabled(!trimmedName.isEmpty)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Abbrechen") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Erstellen") {
-                        onCreate(folderName)
-                        dismiss()
-                    }
-                    .disabled(folderName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    Button("Erstellen", action: submit)
+                        .disabled(trimmedName.isEmpty)
                 }
             }
             .onAppear { isTextFieldFocused = true }
         }
+    }
+
+    private func submit() {
+        guard !trimmedName.isEmpty else { return }
+        onCreate(trimmedName)
+        dismiss()
     }
 }
