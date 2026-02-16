@@ -18,8 +18,8 @@ final class PDFItem: TreeItem {
     var lastModified: Date = Date()
     var pdfUrl: URL? = nil
 
-    @Relationship
-    var folder: PDFFolder?
+//    @Relationship
+//    var folder: PDFFolder?
 
     init(
         title: String = "",

@@ -32,6 +32,19 @@ class PDFTreeViewModel: TreeViewModel {
             subfolders: [workFolder, privateFolder]
         )
 
-        self.rootFolders = [root]
+        let allItems = allItems(in: [root])
+        let allPDFsFolder = PDFFolder(name: "Alle PDFs", icon: "tray.full.fill", items: allItems)
+
+        self.rootFolders = [allPDFsFolder, root]
+    }
+
+    /// Recursively collects all `PDFItem` leaves from the given folders
+    /// and all of their nested subfolders.
+    func allItems(in folders: [PDFFolder]) -> [PDFItem] {
+        folders.flatMap { folder -> [PDFItem] in
+            let ownItems = folder.items ?? []
+            let childItems = allItems(in: folder.subfolders ?? [])
+            return ownItems + childItems
+        }
     }
 }

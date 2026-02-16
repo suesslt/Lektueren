@@ -13,7 +13,7 @@ final class PDFFolder: TreeFolder {
     var name: String
     var icon: String
 
-    @Relationship(deleteRule: .cascade, inverse: \PDFItem.folder)
+    @Relationship(deleteRule: .nullify)
     var items: [PDFItem]?
 
     var parent: PDFFolder?
