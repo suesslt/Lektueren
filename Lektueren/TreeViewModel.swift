@@ -11,8 +11,7 @@
 @MainActor
 protocol TreeViewModel: AnyObject {
     associatedtype Folder: TreeFolder & Hashable & Identifiable
-    associatedtype Leaf: TreeItem & Hashable & Identifiable
-        where Folder.Leaf == Leaf
+    associatedtype Leaf: TreeItem & Hashable & Identifiable where Folder.Leaf == Leaf
 
     var rootFolders: [Folder] { get }
     var selectedFolder: Folder? { get set }
