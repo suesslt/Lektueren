@@ -6,7 +6,7 @@
 //
 import SwiftUI
 
-struct TripleColumnLayout<ViewModel: TreeViewModel, Detail: View>: View where ViewModel.Item: TreeFolder {
+struct TripleColumnLayout<ViewModel: TreeViewModel, Detail: View>: View where ViewModel.Item: TreeDetailItem {
     @StateObject var viewModel: ViewModel
     @State private var columnVisibility = NavigationSplitViewVisibility.all
 
@@ -25,7 +25,7 @@ struct TripleColumnLayout<ViewModel: TreeViewModel, Detail: View>: View where Vi
             TreeFolderDetailList(viewModel: viewModel)
         } detail: {
             if let item = viewModel.selectedDetailItem {
-                detail(item)
+                detail(item as! ViewModel.Item)
             } else {
                 ContentUnavailableView("Element auswählen", systemImage: "folder")
             }

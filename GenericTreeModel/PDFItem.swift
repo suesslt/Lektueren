@@ -8,7 +8,7 @@ import SwiftData
 import SwiftUI
 
 @Model
-final class PDFItem {
+final class PDFItem : TreeDetailItem {
     @Attribute(.unique) var id: UUID = UUID()
     var name: String
     @Relationship
