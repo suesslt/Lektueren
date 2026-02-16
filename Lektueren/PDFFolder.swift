@@ -16,7 +16,11 @@ final class PDFFolder: TreeFolder {
     var items: [PDFItem]?
     var parent: PDFFolder?
     @Relationship(deleteRule: .cascade, inverse: \PDFFolder.parent)
-    var subfolders: [PDFFolder]?
+    var storedSubfolders: [PDFFolder]?
+    var subfolders: [PDFFolder]? {
+        guard let folders = storedSubfolders, !folders.isEmpty else { return nil }
+        return folders
+    }
 
     init(
         name: String,
@@ -27,6 +31,6 @@ final class PDFFolder: TreeFolder {
         self.name = name
         self.items = items
         self.parent = parent
-        self.subfolders = subfolders
+        self.storedSubfolders = subfolders
     }
 }

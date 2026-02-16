@@ -40,7 +40,7 @@ class PDFTreeViewModel: TreeViewModel {
             predicate: #Predicate { $0.parent == nil },
             sortBy: [SortDescriptor(\.name)]
         )
-        descriptor.relationshipKeyPathsForPrefetching = [\.subfolders, \.items]
+        descriptor.relationshipKeyPathsForPrefetching = [\.storedSubfolders, \.items]
         let fetched = (try? modelContext.fetch(descriptor)) ?? []
         rootFolders = [allItemsFolder] + fetched
     }
