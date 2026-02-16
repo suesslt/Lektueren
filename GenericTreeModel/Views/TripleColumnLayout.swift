@@ -27,7 +27,7 @@ struct TripleColumnLayout<ViewModel: TreeViewModel, Detail: View>: View where Vi
             if let item = viewModel.selectedDetailItem {
                 detail(item)
             } else {
-                Text("Bitte wählen Sie ein Element aus.")
+                ContentUnavailableView("Element auswählen", systemImage: "folder")
             }
         }
     }
