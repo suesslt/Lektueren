@@ -24,28 +24,28 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		B59EAACF2F412EFB000A3263 /* GenericTreeModel.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GenericTreeModel.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		B59EAAE02F412EFD000A3263 /* GenericTreeModelTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GenericTreeModelTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		B59EAAEA2F412EFD000A3263 /* GenericTreeModelUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GenericTreeModelUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B59EAACF2F412EFB000A3263 /* Lektueren.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Lektueren.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B59EAAE02F412EFD000A3263 /* LektuerenTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LektuerenTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B59EAAEA2F412EFD000A3263 /* LektuerenUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LektuerenUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		B59EAAF22F412EFD000A3263 /* Exceptions for "GenericTreeModel" folder in "GenericTreeModel" target */ = {
+		B59EAAF22F412EFD000A3263 /* Exceptions for "Lektueren" folder in "Lektueren" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
-			target = B59EAACE2F412EFB000A3263 /* GenericTreeModel */;
+			target = B59EAACE2F412EFB000A3263 /* Lektueren */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		B59EAAD12F412EFB000A3263 /* GenericTreeModel */ = {
+		B59EAAD12F412EFB000A3263 /* Lektueren */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				B59EAAF22F412EFD000A3263 /* Exceptions for "GenericTreeModel" folder in "GenericTreeModel" target */,
+				B59EAAF22F412EFD000A3263 /* Exceptions for "Lektueren" folder in "Lektueren" target */,
 			);
-			path = GenericTreeModel;
+			path = Lektueren;
 			sourceTree = "<group>";
 		};
 		B59EAAE32F412EFD000A3263 /* GenericTreeModelTests */ = {
@@ -88,7 +88,7 @@
 		B59EAAC62F412EFB000A3263 = {
 			isa = PBXGroup;
 			children = (
-				B59EAAD12F412EFB000A3263 /* GenericTreeModel */,
+				B59EAAD12F412EFB000A3263 /* Lektueren */,
 				B59EAAE32F412EFD000A3263 /* GenericTreeModelTests */,
 				B59EAAED2F412EFD000A3263 /* GenericTreeModelUITests */,
 				B59EAAD02F412EFB000A3263 /* Products */,
@@ -98,9 +98,9 @@
 		B59EAAD02F412EFB000A3263 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				B59EAACF2F412EFB000A3263 /* GenericTreeModel.app */,
-				B59EAAE02F412EFD000A3263 /* GenericTreeModelTests.xctest */,
-				B59EAAEA2F412EFD000A3263 /* GenericTreeModelUITests.xctest */,
+				B59EAACF2F412EFB000A3263 /* Lektueren.app */,
+				B59EAAE02F412EFD000A3263 /* LektuerenTests.xctest */,
+				B59EAAEA2F412EFD000A3263 /* LektuerenUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -108,9 +108,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		B59EAACE2F412EFB000A3263 /* GenericTreeModel */ = {
+		B59EAACE2F412EFB000A3263 /* Lektueren */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B59EAAF32F412EFD000A3263 /* Build configuration list for PBXNativeTarget "GenericTreeModel" */;
+			buildConfigurationList = B59EAAF32F412EFD000A3263 /* Build configuration list for PBXNativeTarget "Lektueren" */;
 			buildPhases = (
 				B59EAACB2F412EFB000A3263 /* Sources */,
 				B59EAACC2F412EFB000A3263 /* Frameworks */,
@@ -121,18 +121,18 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				B59EAAD12F412EFB000A3263 /* GenericTreeModel */,
+				B59EAAD12F412EFB000A3263 /* Lektueren */,
 			);
-			name = GenericTreeModel;
+			name = Lektueren;
 			packageProductDependencies = (
 			);
 			productName = GenericTreeModel;
-			productReference = B59EAACF2F412EFB000A3263 /* GenericTreeModel.app */;
+			productReference = B59EAACF2F412EFB000A3263 /* Lektueren.app */;
 			productType = "com.apple.product-type.application";
 		};
-		B59EAADF2F412EFD000A3263 /* GenericTreeModelTests */ = {
+		B59EAADF2F412EFD000A3263 /* LektuerenTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B59EAAF82F412EFD000A3263 /* Build configuration list for PBXNativeTarget "GenericTreeModelTests" */;
+			buildConfigurationList = B59EAAF82F412EFD000A3263 /* Build configuration list for PBXNativeTarget "LektuerenTests" */;
 			buildPhases = (
 				B59EAADC2F412EFD000A3263 /* Sources */,
 				B59EAADD2F412EFD000A3263 /* Frameworks */,
@@ -146,16 +146,16 @@
 			fileSystemSynchronizedGroups = (
 				B59EAAE32F412EFD000A3263 /* GenericTreeModelTests */,
 			);
-			name = GenericTreeModelTests;
+			name = LektuerenTests;
 			packageProductDependencies = (
 			);
 			productName = GenericTreeModelTests;
-			productReference = B59EAAE02F412EFD000A3263 /* GenericTreeModelTests.xctest */;
+			productReference = B59EAAE02F412EFD000A3263 /* LektuerenTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		B59EAAE92F412EFD000A3263 /* GenericTreeModelUITests */ = {
+		B59EAAE92F412EFD000A3263 /* LektuerenUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B59EAAFB2F412EFD000A3263 /* Build configuration list for PBXNativeTarget "GenericTreeModelUITests" */;
+			buildConfigurationList = B59EAAFB2F412EFD000A3263 /* Build configuration list for PBXNativeTarget "LektuerenUITests" */;
 			buildPhases = (
 				B59EAAE62F412EFD000A3263 /* Sources */,
 				B59EAAE72F412EFD000A3263 /* Frameworks */,
@@ -169,11 +169,11 @@
 			fileSystemSynchronizedGroups = (
 				B59EAAED2F412EFD000A3263 /* GenericTreeModelUITests */,
 			);
-			name = GenericTreeModelUITests;
+			name = LektuerenUITests;
 			packageProductDependencies = (
 			);
 			productName = GenericTreeModelUITests;
-			productReference = B59EAAEA2F412EFD000A3263 /* GenericTreeModelUITests.xctest */;
+			productReference = B59EAAEA2F412EFD000A3263 /* LektuerenUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -199,7 +199,7 @@
 					};
 				};
 			};
-			buildConfigurationList = B59EAACA2F412EFB000A3263 /* Build configuration list for PBXProject "GenericTreeModel" */;
+			buildConfigurationList = B59EAACA2F412EFB000A3263 /* Build configuration list for PBXProject "Lektueren" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -213,9 +213,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				B59EAACE2F412EFB000A3263 /* GenericTreeModel */,
-				B59EAADF2F412EFD000A3263 /* GenericTreeModelTests */,
-				B59EAAE92F412EFD000A3263 /* GenericTreeModelUITests */,
+				B59EAACE2F412EFB000A3263 /* Lektueren */,
+				B59EAADF2F412EFD000A3263 /* LektuerenTests */,
+				B59EAAE92F412EFD000A3263 /* LektuerenUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -271,12 +271,12 @@
 /* Begin PBXTargetDependency section */
 		B59EAAE22F412EFD000A3263 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = B59EAACE2F412EFB000A3263 /* GenericTreeModel */;
+			target = B59EAACE2F412EFB000A3263 /* Lektueren */;
 			targetProxy = B59EAAE12F412EFD000A3263 /* PBXContainerItemProxy */;
 		};
 		B59EAAEC2F412EFD000A3263 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = B59EAACE2F412EFB000A3263 /* GenericTreeModel */;
+			target = B59EAACE2F412EFB000A3263 /* Lektueren */;
 			targetProxy = B59EAAEB2F412EFD000A3263 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -287,6 +287,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Lektueren/Lektueren.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = D7X6ZT8YZW;
@@ -311,7 +312,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = intoo.GenericTreeModel;
+				PRODUCT_BUNDLE_IDENTIFIER = intoo.Lektueren;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
@@ -332,6 +333,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Lektueren/Lektueren.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = D7X6ZT8YZW;
@@ -356,7 +358,7 @@
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = intoo.GenericTreeModel;
+				PRODUCT_BUNDLE_IDENTIFIER = intoo.Lektueren;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SDKROOT = auto;
@@ -509,7 +511,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/GenericTreeModel.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/GenericTreeModel";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Lektueren.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Lektueren";
 				XROS_DEPLOYMENT_TARGET = 26.2;
 			};
 			name = Debug;
@@ -535,7 +537,7 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/GenericTreeModel.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/GenericTreeModel";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Lektueren.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Lektueren";
 				XROS_DEPLOYMENT_TARGET = 26.2;
 			};
 			name = Release;
@@ -593,7 +595,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		B59EAACA2F412EFB000A3263 /* Build configuration list for PBXProject "GenericTreeModel" */ = {
+		B59EAACA2F412EFB000A3263 /* Build configuration list for PBXProject "Lektueren" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B59EAAF62F412EFD000A3263 /* Debug */,
@@ -602,7 +604,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B59EAAF32F412EFD000A3263 /* Build configuration list for PBXNativeTarget "GenericTreeModel" */ = {
+		B59EAAF32F412EFD000A3263 /* Build configuration list for PBXNativeTarget "Lektueren" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B59EAAF42F412EFD000A3263 /* Debug */,
@@ -611,7 +613,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B59EAAF82F412EFD000A3263 /* Build configuration list for PBXNativeTarget "GenericTreeModelTests" */ = {
+		B59EAAF82F412EFD000A3263 /* Build configuration list for PBXNativeTarget "LektuerenTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B59EAAF92F412EFD000A3263 /* Debug */,
@@ -620,7 +622,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B59EAAFB2F412EFD000A3263 /* Build configuration list for PBXNativeTarget "GenericTreeModelUITests" */ = {
+		B59EAAFB2F412EFD000A3263 /* Build configuration list for PBXNativeTarget "LektuerenUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B59EAAFC2F412EFD000A3263 /* Debug */,
