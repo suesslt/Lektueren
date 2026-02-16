@@ -10,7 +10,10 @@ import SwiftUI
 @Model
 final class PDFItem: TreeItem {
     @Attribute(.unique) var id: UUID = UUID()
-    var name: String = ""
+    var title: String?
+    var fileName: String
+    var author: String?
+    var pageCount: Int
     var icon: String = "doc.richtext"
     var fileSize: String = "0 KB"
     var lastModified: Date = Date()
@@ -20,13 +23,19 @@ final class PDFItem: TreeItem {
     var folder: PDFFolder?
 
     init(
-        name: String = "",
+        title: String = "",
+        fileName: String = "",
+        author: String = "",
+        pageCount: Int = 0,
         icon: String = "doc.richtext",
         fileSize: String = "0 KB",
         lastModified: Date = Date(),
         pdfUrl: URL? = nil
     ) {
-        self.name = name
+        self.title = title
+        self.fileName = fileName
+        self.author = author
+        self.pageCount = pageCount
         self.icon = icon
         self.fileSize = fileSize
         self.lastModified = lastModified
@@ -34,6 +43,6 @@ final class PDFItem: TreeItem {
     }
 
     var rowView: some View {
-        PDFItemRowView(item: self)
+        PDFItemRowView(document: self)
     }
 }

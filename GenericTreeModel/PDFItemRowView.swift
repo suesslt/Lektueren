@@ -7,27 +7,41 @@
 import SwiftUI
 
 struct PDFItemRowView: View {
-    let item: PDFItem
+    let document: PDFItem
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: item.icon)
-                .foregroundStyle(.tint)
-                .frame(width: 28)
+            // Thumbnail
+//            DocumentThumbnail(document: document)
+//                .frame(width: 44, height: 60)
+//                .clipShape(RoundedRectangle(cornerRadius: 4))
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(item.name)
+            // Info
+            VStack(alignment: .leading, spacing: 4) {
+                Text(document.title ?? document.fileName)
                     .font(.body)
+                    .lineLimit(2)
+
                 HStack(spacing: 8) {
-                    Text(item.fileSize)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Text(item.lastModified.formatted(date: .abbreviated, time: .omitted))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    if let author = document.author, !author.isEmpty {
+                        Text(author)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    if document.pageCount > 0 {
+                        Text("•")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        Text("\(document.pageCount) Seiten")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
+            Spacer()
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, 4)
     }
 }

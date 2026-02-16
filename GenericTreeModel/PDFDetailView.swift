@@ -15,7 +15,7 @@ struct PDFDetailView: View {
                 .font(.system(size: 80))
                 .foregroundColor(.accentColor)
 
-            Text(item.name)
+            Text(item.title!)
                 .font(.title)
 
             List {
