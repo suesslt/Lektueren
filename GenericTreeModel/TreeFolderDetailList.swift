@@ -16,7 +16,7 @@ struct TreeFolderDetailList<VM: TreeViewModel>: View
         if let folder = viewModel.selectedFolder, let items = folder.items, !items.isEmpty {
             List(items, selection: $selection) { item in
                 NavigationLink(value: item) {
-                    Label(item.name, systemImage: item.icon)
+                    item.rowView
                 }
             }
             .navigationTitle(folder.name)

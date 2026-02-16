@@ -10,8 +10,8 @@ import SwiftUI
 @Model
 final class PDFItem: TreeLeafItem {
     @Attribute(.unique) var id: UUID = UUID()
-    var name: String
-    var icon: String
+    var name: String = ""
+    var icon: String = "doc.richtext"
     var fileSize: String = "0 KB"
     var lastModified: Date = Date()
     var pdfUrl: URL? = nil
@@ -20,7 +20,7 @@ final class PDFItem: TreeLeafItem {
     var folder: PDFFolder?
 
     init(
-        name: String,
+        name: String = "",
         icon: String = "doc.richtext",
         fileSize: String = "0 KB",
         lastModified: Date = Date(),
@@ -31,5 +31,9 @@ final class PDFItem: TreeLeafItem {
         self.fileSize = fileSize
         self.lastModified = lastModified
         self.pdfUrl = pdfUrl
+    }
+
+    var rowView: some View {
+        PDFItemRowView(item: self)
     }
 }
