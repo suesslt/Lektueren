@@ -9,17 +9,19 @@ import SwiftUI
 
 @Model
 final class PDFItem: TreeItem {
-    @Attribute(.unique) var id: UUID = UUID()
+    // CloudKit does not support unique constraints — remove @Attribute(.unique).
+    var id: UUID = UUID()
     var title: String?
-    var fileName: String
+    var fileName: String = ""       // Must have a default for CloudKit sync
     var author: String?
-    var pageCount: Int
-    var fileSize: String
+    var pageCount: Int = 0          // Must have a default for CloudKit sync
+    var fileSize: String = "0 KB"   // Must have a default for CloudKit sync
     var lastModified: Date = Date()
     var pdfUrl: URL? = nil
 
-//    @Relationship
-//    var folder: PDFFolder?
+    // Inverse relationship required by CloudKit.
+    // PDFFolder.items uses `inverse: \PDFItem.folder`, so this must exist.
+    var folder: PDFFolder?
 
     init(
         title: String = "",

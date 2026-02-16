@@ -9,7 +9,7 @@ import SwiftUI
 struct TreeContentView<VM: TreeViewModel>: View
     where VM.Folder: Hashable
 {
-    @ObservedObject var viewModel: VM
+    @State var viewModel: VM
     @State private var selection: VM.Folder?
 
     var body: some View {

@@ -9,11 +9,15 @@ import SwiftData
 
 @Model
 final class PDFFolder: TreeFolder {
-    @Attribute(.unique) var id: UUID = UUID()
-    var name: String
-    var icon: String
+    // CloudKit does not support unique constraints — remove @Attribute(.unique).
+    // SwiftData / CloudKit manages record identity internally via its own CKRecord ID.
+    var id: UUID = UUID()
+    var name: String = ""       // Must have a default for CloudKit sync
+    var icon: String = "folder.fill"
 
-    @Relationship(deleteRule: .nullify)
+    // The inverse relationship (PDFItem.folder → PDFFolder) satisfies CloudKit's
+    // requirement that every relationship has an inverse.
+    @Relationship(deleteRule: .nullify, inverse: \PDFItem.folder)
     var items: [PDFItem]?
 
     var parent: PDFFolder?
