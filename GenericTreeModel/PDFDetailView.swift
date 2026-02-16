@@ -6,7 +6,7 @@
 //
 import SwiftUI
 
-struct PDFDetailView<T: TreeFolder>: View {
+struct PDFDetailView<T: TreeItem>: View {
     let item: T
 
     var body: some View {

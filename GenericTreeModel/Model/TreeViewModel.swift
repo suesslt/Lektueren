@@ -8,9 +8,9 @@
 import Combine
 
 protocol TreeViewModel: ObservableObject {
-    associatedtype Item: TreeFolder & Hashable & Identifiable
+    associatedtype Item: TreeItem & Hashable & Identifiable
     
-    var rootFolders: [TreeFolder] { get }
-    var selectedFolder: TreeFolder? { get set }
-    var selectedDetailItem: TreeDetailItem? { get set } // Falls Details auch TreeItems sind
+    var rootFolders: [Item] { get }
+    var selectedFolder: Item? { get set }
+    var selectedDetailItem: Item? { get set } // Falls Details auch TreeItems sind
 }
