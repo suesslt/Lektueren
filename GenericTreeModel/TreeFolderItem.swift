@@ -11,7 +11,6 @@ protocol TreeFolderItem {
     var id: UUID { get }
     var name: String { get }
     var icon: String { get }
-    var children: [Leaf]? { get }
-    /// Sub-folders of the same type, used for recursive tree navigation.
+    var items: [Leaf]? { get }
     var subfolders: [Self]? { get }
 }

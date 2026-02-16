@@ -13,7 +13,7 @@ struct TreeFolderDetailList<VM: TreeViewModel>: View
     @State private var selection: VM.Leaf?
 
     var body: some View {
-        if let folder = viewModel.selectedFolder, let items = folder.children, !items.isEmpty {
+        if let folder = viewModel.selectedFolder, let items = folder.items, !items.isEmpty {
             List(items, selection: $selection) { item in
                 NavigationLink(value: item) {
                     Label(item.name, systemImage: item.icon)

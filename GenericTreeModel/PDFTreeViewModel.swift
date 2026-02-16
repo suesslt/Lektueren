@@ -23,7 +23,7 @@ class PDFTreeViewModel: TreeViewModel {
         let pdf1 = PDFItem(name: "Rechnung_Januar.pdf", fileSize: "1.2 MB", pdfUrl: URL(string: "https://example.com/1.pdf"))
         let pdf2 = PDFItem(name: "Vertrag_final.pdf", fileSize: "4.5 MB", pdfUrl: URL(string: "https://example.com/2.pdf"))
 
-        let workFolder = PDFFolder(name: "Arbeit", icon: "folder.fill", children: [pdf1, pdf2])
+        let workFolder = PDFFolder(name: "Arbeit", icon: "folder.fill", items: [pdf1, pdf2])
         let privateFolder = PDFFolder(name: "Privat", icon: "folder.fill")
 
         let root = PDFFolder(

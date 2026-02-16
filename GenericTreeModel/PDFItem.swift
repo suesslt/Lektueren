@@ -34,8 +34,6 @@ final class PDFItem: TreeLeafItem {
     }
 }
 
-// MARK: - PDFFolder (Ordner)
-
 @Model
 final class PDFFolder: TreeFolderItem {
     @Attribute(.unique) var id: UUID = UUID()
@@ -43,7 +41,7 @@ final class PDFFolder: TreeFolderItem {
     var icon: String
 
     @Relationship(deleteRule: .cascade, inverse: \PDFItem.folder)
-    var children: [PDFItem]?
+    var items: [PDFItem]?
 
     var parent: PDFFolder?
 
@@ -53,13 +51,13 @@ final class PDFFolder: TreeFolderItem {
     init(
         name: String,
         icon: String = "folder.fill",
-        children: [PDFItem]? = nil,
+        items: [PDFItem]? = nil,
         parent: PDFFolder? = nil,
         subfolders: [PDFFolder]? = nil
     ) {
         self.name = name
         self.icon = icon
-        self.children = children
+        self.items = items
         self.parent = parent
         self.subfolders = subfolders
     }
