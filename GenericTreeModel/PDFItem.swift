@@ -21,8 +21,7 @@ final class PDFItem {
 
     init(
         name: String,
-        icon: String,
-        parent: TreeFolder? = nil,
+        folder: TreeFolder? = nil,
         fileSize: String = "0 KB",
         lastModified: Date = Date(),
         pdfUrl: URL? = nil
