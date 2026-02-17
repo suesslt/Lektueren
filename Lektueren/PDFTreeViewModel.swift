@@ -17,8 +17,11 @@ class PDFTreeViewModel: TreeViewModel {
     typealias Leaf = PDFItem
 
     private(set) var rootFolders: [PDFFolder] = []
-    var selectedFolder: PDFFolder?
+    var selectedFolder: PDFFolder? {
+        didSet { refreshDisplayedItems() }
+    }
     var selectedDetailItem: PDFItem?
+    private(set) var displayedItems: [PDFItem] = []
 
     private let modelContext: ModelContext
     private nonisolated(unsafe) var notificationTask: Task<Void, Never>?
@@ -43,14 +46,32 @@ class PDFTreeViewModel: TreeViewModel {
     func fetchRootFolders() {
         let pseudoID = allItemsFolder.id
         var descriptor = FetchDescriptor<PDFFolder>(
-            // Schliesst das Pseudo-Folder aus, falls SwiftData es verfolgt,
-            // und holt nur echte Root-Ordner (parent == nil).
             predicate: #Predicate { $0.parent == nil && $0.id != pseudoID },
             sortBy: [SortDescriptor(\.name)]
         )
         descriptor.relationshipKeyPathsForPrefetching = [\.storedSubfolders, \.items]
         let fetched = (try? modelContext.fetch(descriptor)) ?? []
         rootFolders = [allItemsFolder] + fetched
+        refreshDisplayedItems()
+    }
+
+    /// Aktualisiert `displayedItems` basierend auf dem aktuell selektierten Folder.
+    /// - Virtueller Folder ("Alle Lektüren"): Query über alle PDFItems im Store.
+    /// - Echter Folder: Items direkt aus dem Folder.
+    /// - Kein Folder: leere Liste.
+    private func refreshDisplayedItems() {
+        guard let folder = selectedFolder else {
+            displayedItems = []
+            return
+        }
+        if folder.isVirtual {
+            let descriptor = FetchDescriptor<PDFItem>(
+                sortBy: [SortDescriptor(\.title)]
+            )
+            displayedItems = (try? modelContext.fetch(descriptor)) ?? []
+        } else {
+            displayedItems = folder.items ?? []
+        }
     }
 
     func addFolder(name: String, parent: PDFFolder?) {
