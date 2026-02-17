@@ -5,8 +5,105 @@
 //  Created by Thomas Süssli on 15.02.2026.
 //
 import SwiftUI
+import PDFKit
 
 struct PDFDetailView: View {
+    let item: PDFItem
+
+    @State private var isInspectorPresented: Bool = true
+
+    var body: some View {
+        PDFKitView(url: item.pdfUrl)
+            .ignoresSafeArea(edges: .bottom)
+            .navigationTitle(item.title ?? item.fileName)
+            #if os(iOS)
+            .navigationBarTitleDisplayMode(.inline)
+            #endif
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        withAnimation {
+                            isInspectorPresented.toggle()
+                        }
+                    } label: {
+                        Label(
+                            isInspectorPresented ? "Informationen ausblenden" : "Informationen anzeigen",
+                            systemImage: "sidebar.right"
+                        )
+                    }
+                }
+            }
+            .inspector(isPresented: $isInspectorPresented) {
+                PDFInspectorView(item: item)
+                    .inspectorColumnWidth(min: 260, ideal: 300, max: 400)
+            }
+    }
+}
+
+// MARK: - PDFKit View (UIViewRepresentable / NSViewRepresentable)
+
+private struct PDFKitView: View {
+    let url: URL?
+
+    var body: some View {
+        if let url {
+            #if os(macOS)
+            MacPDFView(url: url)
+            #else
+            iOSPDFView(url: url)
+            #endif
+        } else {
+            ContentUnavailableView(
+                "Keine Datei",
+                systemImage: "doc.richtext",
+                description: Text("Der Pfad zur PDF-Datei ist nicht verfügbar.")
+            )
+        }
+    }
+}
+
+#if os(macOS)
+private struct MacPDFView: NSViewRepresentable {
+    let url: URL
+
+    func makeNSView(context: Context) -> PDFView {
+        let view = PDFView()
+        view.autoScales = true
+        view.displayMode = .singlePageContinuous
+        view.displayDirection = .vertical
+        return view
+    }
+
+    func updateNSView(_ nsView: PDFView, context: Context) {
+        if nsView.document?.documentURL != url {
+            nsView.document = PDFDocument(url: url)
+        }
+    }
+}
+#else
+private struct iOSPDFView: UIViewRepresentable {
+    let url: URL
+
+    func makeUIView(context: Context) -> PDFView {
+        let view = PDFView()
+        view.autoScales = true
+        view.displayMode = .singlePageContinuous
+        view.displayDirection = .vertical
+        view.usePageViewController(true)
+        return view
+    }
+
+    func updateUIView(_ uiView: PDFView, context: Context) {
+        if uiView.document?.documentURL != url {
+            uiView.document = PDFDocument(url: url)
+        }
+    }
+}
+#endif
+
+// MARK: - Inspector Panel
+
+private struct PDFInspectorView: View {
     let item: PDFItem
 
     var body: some View {
@@ -15,20 +112,19 @@ struct PDFDetailView: View {
             Section {
                 HStack {
                     Spacer()
-                    VStack(spacing: 12) {
+                    VStack(spacing: 10) {
                         PDFThumbnailView(data: item.thumbnailData)
-                            .frame(width: 90, height: 120)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                            .shadow(color: .black.opacity(0.2), radius: 6, x: 0, y: 3)
+                            .frame(width: 72, height: 96)
+                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                            .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
                         Text(item.title ?? item.fileName)
-                            .font(.title2)
-                            .bold()
+                            .font(.headline)
                             .multilineTextAlignment(.center)
                     }
                     Spacer()
                 }
                 .listRowBackground(Color.clear)
-                .padding(.vertical, 8)
+                .padding(.vertical, 6)
             }
 
             // MARK: Allgemein
@@ -114,9 +210,6 @@ struct PDFDetailView: View {
         #if os(iOS)
         .listStyle(.insetGrouped)
         #endif
-        .navigationTitle(item.title ?? item.fileName)
-        #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
-        #endif
+        .navigationTitle("Informationen")
     }
 }
