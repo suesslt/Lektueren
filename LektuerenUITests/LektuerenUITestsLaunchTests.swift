@@ -1,13 +1,13 @@
 //
-//  GenericTreeModelUITestsLaunchTests.swift
-//  GenericTreeModelUITests
+//  LektuerenUITestsLaunchTests.swift
+//  LektuerenUITests
 //
 //  Created by Thomas Süssli on 15.02.2026.
 //
 
 import XCTest
 
-final class GenericTreeModelUITestsLaunchTests: XCTestCase {
+final class LektuerenUITestsLaunchTests: XCTestCase {
 
     override class var runsForEachTargetApplicationUIConfiguration: Bool {
         true

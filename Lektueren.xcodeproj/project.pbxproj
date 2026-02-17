@@ -48,14 +48,14 @@
 			path = Lektueren;
 			sourceTree = "<group>";
 		};
-		B59EAAE32F412EFD000A3263 /* GenericTreeModelTests */ = {
+		B59EAAE32F412EFD000A3263 /* LektuerenTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = GenericTreeModelTests;
+			path = LektuerenTests;
 			sourceTree = "<group>";
 		};
-		B59EAAED2F412EFD000A3263 /* GenericTreeModelUITests */ = {
+		B59EAAED2F412EFD000A3263 /* LektuerenUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = GenericTreeModelUITests;
+			path = LektuerenUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -89,8 +89,8 @@
 			isa = PBXGroup;
 			children = (
 				B59EAAD12F412EFB000A3263 /* Lektueren */,
-				B59EAAE32F412EFD000A3263 /* GenericTreeModelTests */,
-				B59EAAED2F412EFD000A3263 /* GenericTreeModelUITests */,
+				B59EAAE32F412EFD000A3263 /* LektuerenTests */,
+				B59EAAED2F412EFD000A3263 /* LektuerenUITests */,
 				B59EAAD02F412EFB000A3263 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -144,7 +144,7 @@
 				B59EAAE22F412EFD000A3263 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				B59EAAE32F412EFD000A3263 /* GenericTreeModelTests */,
+				B59EAAE32F412EFD000A3263 /* LektuerenTests */,
 			);
 			name = LektuerenTests;
 			packageProductDependencies = (
@@ -167,7 +167,7 @@
 				B59EAAEC2F412EFD000A3263 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				B59EAAED2F412EFD000A3263 /* GenericTreeModelUITests */,
+				B59EAAED2F412EFD000A3263 /* LektuerenUITests */,
 			);
 			name = LektuerenUITests;
 			packageProductDependencies = (

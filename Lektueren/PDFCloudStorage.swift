@@ -29,7 +29,7 @@ enum PDFCloudStorageError: Error, LocalizedError {
 /// Voraussetzungen im Xcode-Target:
 /// - iCloud-Capability aktiviert
 /// - „iCloud Documents" aktiviert (nicht nur CloudKit)
-/// - Container-ID z. B. „iCloud.com.yourcompany.GenericTreeModel" eingetragen
+/// - Container-ID z. B. „iCloud.com.intoo.Lektueren" eingetragen
 /// - Info.plist: `NSUbiquitousContainers` mit entsprechendem Eintrag
 struct PDFCloudStorage {
 
