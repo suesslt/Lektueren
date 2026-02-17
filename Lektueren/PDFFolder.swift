@@ -24,10 +24,12 @@ final class PDFFolder: TreeFolder {
 
     init(
         name: String,
+        id: UUID = UUID(),
         items: [PDFItem]? = nil,
         parent: PDFFolder? = nil,
         subfolders: [PDFFolder]? = nil
     ) {
+        self.id = id
         self.name = name
         self.items = items
         self.parent = parent
