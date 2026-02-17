@@ -96,18 +96,28 @@ class PDFTreeViewModel: TreeViewModel {
             let fileName = url.lastPathComponent
             let fileSize = fileSizeString(for: url)
             let lastModified = (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? Date()
-            let pageCount = pdfPageCount(for: url)
-            let thumbnailData = pdfThumbnailData(for: url)
+            let meta = pdfMetadata(for: url)
 
             let item = PDFItem(
-                title: url.deletingPathExtension().lastPathComponent,
+                title: meta.title ?? url.deletingPathExtension().lastPathComponent,
                 fileName: fileName,
-                pageCount: pageCount,
+                author: meta.author ?? "",
+                subject: meta.subject,
+                creator: meta.creator,
+                producer: meta.producer,
+                keywords: meta.keywords,
+                pageCount: meta.pageCount,
+                pageWidth: meta.pageWidth,
+                pageHeight: meta.pageHeight,
+                pageRotation: meta.pageRotation,
+                isEncrypted: meta.isEncrypted,
                 fileSize: fileSize,
                 lastModified: lastModified,
+                pdfCreationDate: meta.creationDate,
+                pdfModificationDate: meta.modificationDate,
                 pdfUrl: url,
                 contentHash: hash,
-                thumbnailData: thumbnailData
+                thumbnailData: meta.thumbnailData
             )
             item.folder = targetFolder
             modelContext.insert(item)
@@ -135,21 +145,51 @@ class PDFTreeViewModel: TreeViewModel {
         return ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file)
     }
 
-    private func pdfPageCount(for url: URL) -> Int {
-        PDFDocument(url: url)?.pageCount ?? 0
-    }
+    // Alle PDFKit-Metadaten in einem einzigen Durchgang — PDFDocument wird nur einmal geöffnet.
+    private func pdfMetadata(for url: URL) -> PDFMetadata {
+        guard let document = PDFDocument(url: url) else { return PDFMetadata() }
+        let attrs = document.documentAttributes
 
-    private func pdfThumbnailData(for url: URL, size: CGSize = CGSize(width: 120, height: 160)) -> Data? {
-        guard
-            let document = PDFDocument(url: url),
-            let page = document.page(at: 0)
-        else { return nil }
-        let thumbnail = page.thumbnail(of: size, for: .mediaBox)
-        #if os(macOS)
-        return thumbnail.tiffRepresentation
-        #else
-        return thumbnail.jpegData(compressionQuality: 0.7)
-        #endif
+        let page0 = document.page(at: 0)
+        let bounds = page0?.bounds(for: .mediaBox)
+
+        // Thumbnail
+        let thumbnailSize = CGSize(width: 120, height: 160)
+        var thumbnailData: Data?
+        if let page0, let thumbnail = Optional(page0.thumbnail(of: thumbnailSize, for: .mediaBox)) {
+            #if os(macOS)
+            thumbnailData = thumbnail.tiffRepresentation
+            #else
+            thumbnailData = thumbnail.jpegData(compressionQuality: 0.7)
+            #endif
+        }
+
+        // Keywords: PDFKit liefert entweder [String] oder einen einzelnen String
+        var keywords: [String] = []
+        if let raw = attrs?[PDFDocumentAttribute.keywordsAttribute] {
+            if let array = raw as? [String] {
+                keywords = array
+            } else if let single = raw as? String {
+                keywords = single.components(separatedBy: CharacterSet(charactersIn: ",;")).map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+            }
+        }
+
+        return PDFMetadata(
+            title: attrs?[PDFDocumentAttribute.titleAttribute] as? String,
+            author: attrs?[PDFDocumentAttribute.authorAttribute] as? String,
+            subject: attrs?[PDFDocumentAttribute.subjectAttribute] as? String,
+            creator: attrs?[PDFDocumentAttribute.creatorAttribute] as? String,
+            producer: attrs?[PDFDocumentAttribute.producerAttribute] as? String,
+            keywords: keywords,
+            pageCount: document.pageCount,
+            pageWidth: bounds.map { Double($0.width) },
+            pageHeight: bounds.map { Double($0.height) },
+            pageRotation: page0?.rotation,
+            isEncrypted: document.isEncrypted,
+            creationDate: attrs?[PDFDocumentAttribute.creationDateAttribute] as? Date,
+            modificationDate: attrs?[PDFDocumentAttribute.modificationDateAttribute] as? Date,
+            thumbnailData: thumbnailData
+        )
     }
 
     func deleteAll() {
@@ -163,7 +203,6 @@ class PDFTreeViewModel: TreeViewModel {
 
     private func observeStoreChanges() {
         notificationTask = Task { [weak self] in
-            // Lauscht auf alle SwiftData-Änderungen im zugehörigen ModelContainer.
             let notifications = NotificationCenter.default.notifications(
                 named: ModelContext.didSave
             )
@@ -173,4 +212,25 @@ class PDFTreeViewModel: TreeViewModel {
         }
     }
 }
+
+// MARK: - PDFMetadata
+
+private struct PDFMetadata {
+    var title: String?
+    var author: String?
+    var subject: String?
+    var creator: String?
+    var producer: String?
+    var keywords: [String] = []
+    var pageCount: Int = 0
+    var pageWidth: Double?
+    var pageHeight: Double?
+    var pageRotation: Int?
+    var isEncrypted: Bool = false
+    var creationDate: Date?
+    var modificationDate: Date?
+    var thumbnailData: Data?
+}
+
+
 
