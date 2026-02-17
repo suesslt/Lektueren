@@ -45,10 +45,7 @@ struct TreeFolderDetailList<VM: TreeViewModel>: View
                 } label: {
                     Label("PDFs importieren", systemImage: "document.badge.plus")
                 }
-                .disabled(
-                    viewModel.selectedFolder == nil ||
-                    viewModel.selectedFolder?.isVirtual == true
-                )
+                .disabled(viewModel.selectedFolder == nil)
             }
             ToolbarItem(placement: .destructiveAction) {
                 Button(role: .destructive) {
@@ -75,9 +72,8 @@ struct TreeFolderDetailList<VM: TreeViewModel>: View
             allowedContentTypes: [.pdf],
             allowsMultipleSelection: true
         ) { result in
-            guard let folder = viewModel.selectedFolder else { return }
             if case .success(let urls) = result {
-                viewModel.importItems(from: urls, into: folder)
+                viewModel.importItems(from: urls, into: viewModel.selectedFolder)
             }
         }
     }

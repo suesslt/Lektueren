@@ -17,6 +17,7 @@ final class PDFItem: TreeItem {
     var fileSize: String = ""
     var lastModified: Date = Date()
     var pdfUrl: URL? = nil
+    var contentHash: String = ""
     var folder: PDFFolder? // PDFFolder.items uses `inverse: \PDFItem.folder`, so this must exist.
 
     init(
@@ -26,7 +27,8 @@ final class PDFItem: TreeItem {
         pageCount: Int = 0,
         fileSize: String = "",
         lastModified: Date = Date(),
-        pdfUrl: URL? = nil
+        pdfUrl: URL? = nil,
+        contentHash: String = ""
     ) {
         self.title = title
         self.fileName = fileName
@@ -35,6 +37,7 @@ final class PDFItem: TreeItem {
         self.fileSize = fileSize
         self.lastModified = lastModified
         self.pdfUrl = pdfUrl
+        self.contentHash = contentHash
     }
 
     var rowView: some View {

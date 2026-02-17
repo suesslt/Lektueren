@@ -6,6 +6,7 @@
 //
 import SwiftUI
 import SwiftData
+import CryptoKit
 
 /// Observable ViewModel, das Folder und PDFs direkt
 /// aus dem SwiftData / CloudKit Store fetcht.
@@ -17,12 +18,20 @@ class PDFTreeViewModel: TreeViewModel {
     typealias Leaf = PDFItem
 
     private(set) var rootFolders: [PDFFolder] = []
-    var selectedFolder: PDFFolder? {
-        didSet { refreshDisplayedItems() }
-    }
+    var selectedFolder: PDFFolder?
     var selectedDetailItem: PDFItem?
-    private(set) var displayedItems: [PDFItem] = []
 
+    /// Die aktuell anzuzeigenden Items: Alle Items bei virtuellem Folder, sonst die des selektierten Folders.
+    var displayedItems: [PDFItem] {
+        guard let folder = selectedFolder else { return [] }
+        if folder.isVirtual {
+            var descriptor = FetchDescriptor<PDFItem>(sortBy: [SortDescriptor(\.title)])
+            return (try? modelContext.fetch(descriptor)) ?? []
+        }
+        return folder.items ?? []
+    }
+
+    /// Gesamtanzahl aller Items über alle Folders hinweg.
     var totalItemCount: Int {
         let descriptor = FetchDescriptor<PDFItem>()
         return (try? modelContext.fetchCount(descriptor)) ?? 0
@@ -41,21 +50,24 @@ class PDFTreeViewModel: TreeViewModel {
         notificationTask?.cancel()
     }
 
+    /// Sentinel-UUID, die `PDFFolder.isVirtual` erkennt. Muss mit dem Wert in `PDFFolder.isVirtual` übereinstimmen.
+    private static let virtualFolderID = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
+
+    /// Transientes (nicht persistiertes) Pseudo-Folder, das alle Lektüren aggregiert darstellt.
+    /// Die feste Sentinel-UUID stellt sicher, dass `isVirtual` zuverlässig `true` zurückgibt.
     private let allItemsFolder: PDFFolder = PDFFolder(
         name: "Alle Lektüren",
         id: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
     )
 
     func fetchRootFolders() {
-        let pseudoID = allItemsFolder.id
         var descriptor = FetchDescriptor<PDFFolder>(
-            predicate: #Predicate { $0.parent == nil && $0.id != pseudoID },
+            predicate: #Predicate { $0.parent == nil },
             sortBy: [SortDescriptor(\.name)]
         )
         descriptor.relationshipKeyPathsForPrefetching = [\.storedSubfolders, \.items]
         let fetched = (try? modelContext.fetch(descriptor)) ?? []
         rootFolders = [allItemsFolder] + fetched
-        refreshDisplayedItems()
     }
 
     func addFolder(name: String, parent: PDFFolder?) {
@@ -66,10 +78,19 @@ class PDFTreeViewModel: TreeViewModel {
         try? modelContext.save()
     }
 
-    func importItems(from urls: [URL], into folder: PDFFolder) {
+    func importItems(from urls: [URL], into folder: PDFFolder?) {
+        // Alle bereits gespeicherten Hashes einmal laden — O(n) statt O(n²).
+        let existingHashes = fetchExistingHashes()
+
+        // Ein virtueller Folder (z.B. "Alle Lektüren") wird nicht als Ziel gesetzt.
+        let targetFolder: PDFFolder? = folder?.isVirtual == true ? nil : folder
+
         for url in urls {
             guard url.startAccessingSecurityScopedResource() else { continue }
             defer { url.stopAccessingSecurityScopedResource() }
+
+            guard let hash = sha256(for: url) else { continue }
+            guard !existingHashes.contains(hash) else { continue } // Duplikat überspringen
 
             let fileName = url.lastPathComponent
             let fileSize = fileSizeString(for: url)
@@ -80,36 +101,33 @@ class PDFTreeViewModel: TreeViewModel {
                 fileName: fileName,
                 fileSize: fileSize,
                 lastModified: lastModified,
-                pdfUrl: url
+                pdfUrl: url,
+                contentHash: hash
             )
-            item.folder = folder
+            item.folder = targetFolder
             modelContext.insert(item)
         }
         try? modelContext.save()
     }
 
+    /// Berechnet den SHA-256-Hash des Dateiinhalts als Hex-String.
+    private func sha256(for url: URL) -> String? {
+        guard let data = try? Data(contentsOf: url, options: .mappedIfSafe) else { return nil }
+        let digest = SHA256.hash(data: data)
+        return digest.map { String(format: "%02x", $0) }.joined()
+    }
+
+    /// Liest alle bereits gespeicherten Content-Hashes aus dem Store.
+    private func fetchExistingHashes() -> Set<String> {
+        var descriptor = FetchDescriptor<PDFItem>()
+        descriptor.propertiesToFetch = [\.contentHash]
+        let items = (try? modelContext.fetch(descriptor)) ?? []
+        return Set(items.compactMap { $0.contentHash.isEmpty ? nil : $0.contentHash })
+    }
+
     private func fileSizeString(for url: URL) -> String {
         let bytes = (try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
         return ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file)
-    }
-
-    /// Aktualisiert `displayedItems` basierend auf dem aktuell selektierten Folder.
-    /// - Virtueller Folder ("Alle Lektüren"): Query über alle PDFItems im Store.
-    /// - Echter Folder: Items direkt aus dem Folder.
-    /// - Kein Folder: leere Liste.
-    private func refreshDisplayedItems() {
-        guard let folder = selectedFolder else {
-            displayedItems = []
-            return
-        }
-        if folder.isVirtual {
-            let descriptor = FetchDescriptor<PDFItem>(
-                sortBy: [SortDescriptor(\.title)]
-            )
-            displayedItems = (try? modelContext.fetch(descriptor)) ?? []
-        } else {
-            displayedItems = folder.items ?? []
-        }
     }
 
     func deleteAll() {

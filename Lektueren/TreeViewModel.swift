@@ -27,7 +27,8 @@ protocol TreeViewModel: AnyObject {
     func addFolder(name: String, parent: Folder?)
 
     /// Importiert Items aus den angegebenen URLs in den angegebenen Ordner.
-    func importItems(from urls: [URL], into folder: Folder)
+    /// Wird `nil` übergeben, werden die Items ohne Ordner-Zuordnung gespeichert.
+    func importItems(from urls: [URL], into folder: Folder?)
 
     func deleteAll()
 }
