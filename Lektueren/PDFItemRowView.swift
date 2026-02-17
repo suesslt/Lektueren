@@ -12,9 +12,10 @@ struct PDFItemRowView: View {
     var body: some View {
         HStack(spacing: 12) {
             // Thumbnail
-//            DocumentThumbnail(document: document)
-//                .frame(width: 44, height: 60)
-//                .clipShape(RoundedRectangle(cornerRadius: 4))
+            PDFThumbnailView(data: document.thumbnailData)
+                .frame(width: 44, height: 60)
+                .clipShape(RoundedRectangle(cornerRadius: 4))
+                .shadow(color: .black.opacity(0.15), radius: 2, x: 0, y: 1)
 
             // Info
             VStack(alignment: .leading, spacing: 4) {
@@ -45,3 +46,6 @@ struct PDFItemRowView: View {
         .padding(.vertical, 4)
     }
 }
+
+
+

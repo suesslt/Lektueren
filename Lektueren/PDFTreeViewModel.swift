@@ -7,6 +7,7 @@
 import SwiftUI
 import SwiftData
 import CryptoKit
+import PDFKit
 
 /// Observable ViewModel, das Folder und PDFs direkt
 /// aus dem SwiftData / CloudKit Store fetcht.
@@ -95,14 +96,18 @@ class PDFTreeViewModel: TreeViewModel {
             let fileName = url.lastPathComponent
             let fileSize = fileSizeString(for: url)
             let lastModified = (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? Date()
+            let pageCount = pdfPageCount(for: url)
+            let thumbnailData = pdfThumbnailData(for: url)
 
             let item = PDFItem(
                 title: url.deletingPathExtension().lastPathComponent,
                 fileName: fileName,
+                pageCount: pageCount,
                 fileSize: fileSize,
                 lastModified: lastModified,
                 pdfUrl: url,
-                contentHash: hash
+                contentHash: hash,
+                thumbnailData: thumbnailData
             )
             item.folder = targetFolder
             modelContext.insert(item)
@@ -128,6 +133,23 @@ class PDFTreeViewModel: TreeViewModel {
     private func fileSizeString(for url: URL) -> String {
         let bytes = (try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
         return ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file)
+    }
+
+    private func pdfPageCount(for url: URL) -> Int {
+        PDFDocument(url: url)?.pageCount ?? 0
+    }
+
+    private func pdfThumbnailData(for url: URL, size: CGSize = CGSize(width: 120, height: 160)) -> Data? {
+        guard
+            let document = PDFDocument(url: url),
+            let page = document.page(at: 0)
+        else { return nil }
+        let thumbnail = page.thumbnail(of: size, for: .mediaBox)
+        #if os(macOS)
+        return thumbnail.tiffRepresentation
+        #else
+        return thumbnail.jpegData(compressionQuality: 0.7)
+        #endif
     }
 
     func deleteAll() {
