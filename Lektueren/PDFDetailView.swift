@@ -1,6 +1,6 @@
 //
 //  PDFDetailView.swift
-//  GenericTreeModel
+//  Lektüren
 //
 //  Created by Thomas Süssli on 15.02.2026.
 //
@@ -11,6 +11,7 @@ struct PDFDetailView: View {
     let item: PDFItem
 
     @State private var isInspectorPresented: Bool = true
+    @State private var cloudError: String? = nil
 
     var body: some View {
         PDFKitView(url: item.pdfUrl)
@@ -36,6 +37,23 @@ struct PDFDetailView: View {
             .inspector(isPresented: $isInspectorPresented) {
                 PDFInspectorView(item: item)
                     .inspectorColumnWidth(min: 260, ideal: 300, max: 400)
+            }
+            .alert("iCloud-Fehler", isPresented: Binding(
+                get: { cloudError != nil },
+                set: { if !$0 { cloudError = nil } }
+            )) {
+                Button("OK", role: .cancel) { cloudError = nil }
+            } message: {
+                Text(cloudError ?? "")
+            }
+            .task(id: item.id) {
+                // Sicherstellen, dass die iCloud-Datei lokal heruntergeladen ist.
+                guard let url = item.pdfUrl, PDFCloudStorage.isCloudURL(url) else { return }
+                do {
+                    try PDFCloudStorage.ensureDownloaded(at: url)
+                } catch {
+                    cloudError = error.localizedDescription
+                }
             }
     }
 }

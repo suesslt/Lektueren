@@ -1,6 +1,6 @@
 //
 //  PDFManagerApp.swift
-//  GenericTreeModel
+//  Lektüren
 //
 //  Created by Thomas Süssli on 15.02.2026.
 //
@@ -17,7 +17,7 @@ struct PDFManagerApp: App {
         ])
         // CloudKit-Sync: cloudKitDatabase auf .automatic setzen.
         // Voraussetzung: CloudKit-Capability im Xcode-Target aktiviert
-        // und ein iCloud-Container z. B. "iCloud.com.yourcompany.GenericTreeModel" eingetragen.
+        // und ein iCloud-Container z. B. "iCloud.com.yourcompany.Lektueren" eingetragen.
         let modelConfiguration = ModelConfiguration(
             schema: schema,
             isStoredInMemoryOnly: false,

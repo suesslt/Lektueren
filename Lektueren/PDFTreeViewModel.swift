@@ -1,6 +1,6 @@
 //
 //  PDFTreeViewModel.swift
-//  GenericTreeModel
+//  Lektüren
 //
 //  Created by Thomas Süssli on 15.02.2026.
 //
@@ -98,6 +98,20 @@ class PDFTreeViewModel: TreeViewModel {
             let lastModified = (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? Date()
             let meta = pdfMetadata(for: url)
 
+            // Datei in den iCloud-Container kopieren (falls iCloud verfügbar).
+            // Wenn kein iCloud vorhanden ist, wird die originale URL beibehalten.
+            let storedURL: URL
+            if PDFCloudStorage.isAvailable {
+                do {
+                    storedURL = try PDFCloudStorage.copyToCloud(from: url)
+                } catch {
+                    print("⚠️ iCloud-Kopie fehlgeschlagen für \(fileName): \(error.localizedDescription)")
+                    storedURL = url // Fallback: lokale URL behalten
+                }
+            } else {
+                storedURL = url
+            }
+
             let item = PDFItem(
                 title: meta.title ?? url.deletingPathExtension().lastPathComponent,
                 fileName: fileName,
@@ -115,7 +129,7 @@ class PDFTreeViewModel: TreeViewModel {
                 lastModified: lastModified,
                 pdfCreationDate: meta.creationDate,
                 pdfModificationDate: meta.modificationDate,
-                pdfUrl: url,
+                pdfUrl: storedURL,
                 contentHash: hash,
                 thumbnailData: meta.thumbnailData
             )
@@ -193,12 +207,30 @@ class PDFTreeViewModel: TreeViewModel {
     }
 
     func deleteAll() {
+        // Zuerst alle iCloud-Dateien entfernen
+        let descriptor = FetchDescriptor<PDFItem>()
+        if let items = try? modelContext.fetch(descriptor) {
+            for item in items {
+                if let url = item.pdfUrl {
+                    PDFCloudStorage.removeFromCloud(at: url)
+                }
+            }
+        }
         try? modelContext.delete(model: PDFItem.self)
         try? modelContext.delete(model: PDFFolder.self)
         try? modelContext.save()
         selectedFolder = nil
         selectedDetailItem = nil
         fetchRootFolders()
+    }
+
+    /// Löscht ein einzelnes Item und – falls vorhanden – die zugehörige iCloud-Datei.
+    func delete(item: PDFItem) {
+        if let url = item.pdfUrl {
+            PDFCloudStorage.removeFromCloud(at: url)
+        }
+        modelContext.delete(item)
+        try? modelContext.save()
     }
 
     private func observeStoreChanges() {

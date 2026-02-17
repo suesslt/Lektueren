@@ -1,6 +1,6 @@
 //
 //  PDFFolder.swift
-//  GenericTreeModel
+//  Lektüren
 //
 //  Created by Thomas Süssli on 16.02.2026.
 //
