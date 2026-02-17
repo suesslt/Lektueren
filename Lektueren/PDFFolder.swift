@@ -21,8 +21,7 @@ final class PDFFolder: TreeFolder {
         guard let folders = storedSubfolders, !folders.isEmpty else { return nil }
         return folders
     }
-
-    /// True für das transiente "Alle Lektüren"-Pseudo-Folder.
+    var itemCount: Int { items?.count ?? 0 }
     var isVirtual: Bool {
         id == UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
     }

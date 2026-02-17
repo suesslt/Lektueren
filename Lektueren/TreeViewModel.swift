@@ -20,6 +20,10 @@ protocol TreeViewModel: AnyObject {
     /// store-weit geliefert; sonst die Items des selektierten Folders.
     var displayedItems: [Leaf] { get }
 
+    /// Gesamtanzahl aller Items über alle Folders hinweg.
+    /// Wird für den Item-Count des virtuellen Folders verwendet.
+    var totalItemCount: Int { get }
+
     func addFolder(name: String, parent: Folder?)
 
     /// Importiert Items aus den angegebenen URLs in den angegebenen Ordner.

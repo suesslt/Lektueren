@@ -23,6 +23,11 @@ class PDFTreeViewModel: TreeViewModel {
     var selectedDetailItem: PDFItem?
     private(set) var displayedItems: [PDFItem] = []
 
+    var totalItemCount: Int {
+        let descriptor = FetchDescriptor<PDFItem>()
+        return (try? modelContext.fetchCount(descriptor)) ?? 0
+    }
+
     private let modelContext: ModelContext
     private nonisolated(unsafe) var notificationTask: Task<Void, Never>?
 
@@ -36,8 +41,6 @@ class PDFTreeViewModel: TreeViewModel {
         notificationTask?.cancel()
     }
 
-    // Ein transientes (nicht persistiertes) Pseudo-Folder mit fixer ID,
-    // damit SwiftUI nie ein Duplikat sieht, egal wie oft fetchRootFolders() läuft.
     private let allItemsFolder: PDFFolder = PDFFolder(
         name: "Alle Lektüren",
         id: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
@@ -53,25 +56,6 @@ class PDFTreeViewModel: TreeViewModel {
         let fetched = (try? modelContext.fetch(descriptor)) ?? []
         rootFolders = [allItemsFolder] + fetched
         refreshDisplayedItems()
-    }
-
-    /// Aktualisiert `displayedItems` basierend auf dem aktuell selektierten Folder.
-    /// - Virtueller Folder ("Alle Lektüren"): Query über alle PDFItems im Store.
-    /// - Echter Folder: Items direkt aus dem Folder.
-    /// - Kein Folder: leere Liste.
-    private func refreshDisplayedItems() {
-        guard let folder = selectedFolder else {
-            displayedItems = []
-            return
-        }
-        if folder.isVirtual {
-            let descriptor = FetchDescriptor<PDFItem>(
-                sortBy: [SortDescriptor(\.title)]
-            )
-            displayedItems = (try? modelContext.fetch(descriptor)) ?? []
-        } else {
-            displayedItems = folder.items ?? []
-        }
     }
 
     func addFolder(name: String, parent: PDFFolder?) {
@@ -107,6 +91,25 @@ class PDFTreeViewModel: TreeViewModel {
     private func fileSizeString(for url: URL) -> String {
         let bytes = (try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
         return ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file)
+    }
+
+    /// Aktualisiert `displayedItems` basierend auf dem aktuell selektierten Folder.
+    /// - Virtueller Folder ("Alle Lektüren"): Query über alle PDFItems im Store.
+    /// - Echter Folder: Items direkt aus dem Folder.
+    /// - Kein Folder: leere Liste.
+    private func refreshDisplayedItems() {
+        guard let folder = selectedFolder else {
+            displayedItems = []
+            return
+        }
+        if folder.isVirtual {
+            let descriptor = FetchDescriptor<PDFItem>(
+                sortBy: [SortDescriptor(\.title)]
+            )
+            displayedItems = (try? modelContext.fetch(descriptor)) ?? []
+        } else {
+            displayedItems = folder.items ?? []
+        }
     }
 
     #if DEBUG

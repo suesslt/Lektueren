@@ -15,7 +15,16 @@ where VM.Folder: Hashable {
     var body: some View {
         List(viewModel.rootFolders, children: \.subfolders, selection: $selection) { folder in
             NavigationLink(value: folder) {
-                Label(folder.name, systemImage: folder.icon)
+                let count = folder.isVirtual ? viewModel.totalItemCount : folder.itemCount
+                HStack {
+                    Label(folder.name, systemImage: folder.icon)
+                    Spacer()
+                    if count > 0 {
+                        Text("\(count)")
+                            .foregroundStyle(.secondary)
+                            .monospacedDigit()
+                    }
+                }
             }
         }
         .onChange(of: selection) { _, newValue in
