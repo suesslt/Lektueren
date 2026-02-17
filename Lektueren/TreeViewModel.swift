@@ -29,7 +29,5 @@ protocol TreeViewModel: AnyObject {
     /// Importiert Items aus den angegebenen URLs in den angegebenen Ordner.
     func importItems(from urls: [URL], into folder: Folder)
 
-    #if DEBUG
     func deleteAll()
-    #endif
 }

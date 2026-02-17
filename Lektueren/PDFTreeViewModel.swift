@@ -112,7 +112,6 @@ class PDFTreeViewModel: TreeViewModel {
         }
     }
 
-    #if DEBUG
     func deleteAll() {
         try? modelContext.delete(model: PDFItem.self)
         try? modelContext.delete(model: PDFFolder.self)
@@ -121,7 +120,6 @@ class PDFTreeViewModel: TreeViewModel {
         selectedDetailItem = nil
         fetchRootFolders()
     }
-    #endif
 
     private func observeStoreChanges() {
         notificationTask = Task { [weak self] in

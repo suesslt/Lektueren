@@ -13,6 +13,7 @@ struct TreeFolderDetailList<VM: TreeViewModel>: View
     var viewModel: VM
     @State private var selection: VM.Leaf?
     @State private var isImporting = false
+    @State private var isConfirmingDeleteAll = false
 
     var body: some View {
         let title = viewModel.selectedFolder?.name ?? "Ordner wählen"
@@ -49,6 +50,25 @@ struct TreeFolderDetailList<VM: TreeViewModel>: View
                     viewModel.selectedFolder?.isVirtual == true
                 )
             }
+            ToolbarItem(placement: .destructiveAction) {
+                Button(role: .destructive) {
+                    isConfirmingDeleteAll = true
+                } label: {
+                    Label("Alles löschen", systemImage: "trash")
+                }
+            }
+        }
+        .confirmationDialog(
+            "Alle Daten löschen?",
+            isPresented: $isConfirmingDeleteAll,
+            titleVisibility: .visible
+        ) {
+            Button("Alle Ordner und Lektüren löschen", role: .destructive) {
+                viewModel.deleteAll()
+            }
+            Button("Abbrechen", role: .cancel) {}
+        } message: {
+            Text("Dieser Vorgang löscht alle Ordner und Lektüren unwiderruflich.")
         }
         .fileImporter(
             isPresented: $isImporting,
