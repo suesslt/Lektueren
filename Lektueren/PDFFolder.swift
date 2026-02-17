@@ -22,6 +22,11 @@ final class PDFFolder: TreeFolder {
         return folders
     }
 
+    /// True für das transiente "Alle Lektüren"-Pseudo-Folder.
+    var isVirtual: Bool {
+        id == UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
+    }
+
     init(
         name: String,
         id: UUID = UUID(),

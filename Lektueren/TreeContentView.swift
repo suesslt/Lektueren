@@ -31,10 +31,14 @@ where VM.Folder: Hashable {
             }
         }
         .sheet(isPresented: $isAddingFolder) {
+            // Ist ein virtueller Ordner selektiert, wird der neue Folder als Root erstellt.
+            let effectiveParent: VM.Folder? = viewModel.selectedFolder?.isVirtual == true
+                ? nil
+                : viewModel.selectedFolder
             AddFolderView(
-                parentFolder: viewModel.selectedFolder,
+                parentFolder: effectiveParent,
                 onCreate: { name in
-                    viewModel.addFolder(name: name, parent: viewModel.selectedFolder)
+                    viewModel.addFolder(name: name, parent: effectiveParent)
                 }
             )
         }
