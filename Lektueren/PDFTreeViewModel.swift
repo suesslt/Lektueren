@@ -171,11 +171,7 @@ class PDFTreeViewModel: TreeViewModel {
         let thumbnailSize = CGSize(width: 120, height: 160)
         var thumbnailData: Data?
         if let page0, let thumbnail = Optional(page0.thumbnail(of: thumbnailSize, for: .mediaBox)) {
-            #if os(macOS)
-            thumbnailData = thumbnail.tiffRepresentation
-            #else
             thumbnailData = thumbnail.jpegData(compressionQuality: 0.7)
-            #endif
         }
 
         // Keywords: PDFKit liefert entweder [String] oder einen einzelnen String

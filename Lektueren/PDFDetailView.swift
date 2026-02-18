@@ -17,9 +17,7 @@ struct PDFDetailView: View {
         PDFKitView(url: item.pdfUrl)
             .ignoresSafeArea(edges: .bottom)
             .navigationTitle(item.title ?? item.fileName)
-            #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
-            #endif
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Button {
@@ -65,11 +63,7 @@ private struct PDFKitView: View {
 
     var body: some View {
         if let url {
-            #if os(macOS)
-            MacPDFView(url: url)
-            #else
             iOSPDFView(url: url)
-            #endif
         } else {
             ContentUnavailableView(
                 "Keine Datei",
@@ -80,25 +74,6 @@ private struct PDFKitView: View {
     }
 }
 
-#if os(macOS)
-private struct MacPDFView: NSViewRepresentable {
-    let url: URL
-
-    func makeNSView(context: Context) -> PDFView {
-        let view = PDFView()
-        view.autoScales = true
-        view.displayMode = .singlePageContinuous
-        view.displayDirection = .vertical
-        return view
-    }
-
-    func updateNSView(_ nsView: PDFView, context: Context) {
-        if nsView.document?.documentURL != url {
-            nsView.document = PDFDocument(url: url)
-        }
-    }
-}
-#else
 private struct iOSPDFView: UIViewRepresentable {
     let url: URL
 
@@ -117,7 +92,6 @@ private struct iOSPDFView: UIViewRepresentable {
         }
     }
 }
-#endif
 
 // MARK: - Inspector Panel
 
@@ -225,9 +199,7 @@ private struct PDFInspectorView: View {
                 }
             }
         }
-        #if os(iOS)
         .listStyle(.insetGrouped)
-        #endif
         .navigationTitle("Informationen")
     }
 }
