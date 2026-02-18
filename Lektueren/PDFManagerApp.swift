@@ -37,6 +37,12 @@ struct PDFManagerApp: App {
         }
         .modelContainer(sharedModelContainer)
     }
+
+    init() {
+        // Gibt beim App-Start Diagnoseinformationen zur iCloud-Anbindung aus.
+        // Prüfe die Xcode-Konsole auf "[PDFCloudStorage]"-Zeilen.
+        PDFCloudStorage.logDiagnostics()
+    }
 }
 /// Einstiegspunkt, der den ViewModel mit dem MainContext initialisiert.
 private struct PDFRootView: View {
