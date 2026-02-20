@@ -27,6 +27,13 @@ where VM.Folder: Hashable {
                 }
             }
         }
+        .onAppear {
+            // "Alle Lektüren" beim ersten Start automatisch auswählen
+            if selection == nil, let firstFolder = viewModel.rootFolders.first {
+                selection = firstFolder
+                viewModel.selectedFolder = firstFolder
+            }
+        }
         .onChange(of: selection) { _, newValue in
             viewModel.selectedFolder = newValue
         }
