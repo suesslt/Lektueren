@@ -134,16 +134,27 @@ class PDFTreeViewModel: TreeViewModel {
 
             // Datei in den iCloud-Container kopieren (falls iCloud verfügbar).
             // Wenn kein iCloud vorhanden ist, wird die originale URL beibehalten.
-            let storedURL: URL
+            let relativePath: String
+            let isCloudFile: Bool
+            
             if PDFCloudStorage.isAvailable {
                 do {
-                    storedURL = try PDFCloudStorage.copyToCloud(from: url)
+                    let cloudURL = try PDFCloudStorage.copyToCloud(from: url)
+                    // Nur den Dateinamen (letzter Pfad-Komponente) speichern
+                    relativePath = cloudURL.lastPathComponent
+                    isCloudFile = true
+                    print("✅ In iCloud kopiert: \(relativePath)")
                 } catch {
                     print("⚠️ iCloud-Kopie fehlgeschlagen für \(fileName): \(error.localizedDescription)")
-                    storedURL = url // Fallback: lokale URL behalten
+                    // Fallback: Absolute URL als String speichern
+                    relativePath = url.absoluteString
+                    isCloudFile = false
                 }
             } else {
-                storedURL = url
+                // Fallback: Absolute URL als String speichern
+                relativePath = url.absoluteString
+                isCloudFile = false
+                print("ℹ️ iCloud nicht verfügbar, lokale Datei: \(fileName)")
             }
 
             let item = PDFItem(
@@ -163,7 +174,8 @@ class PDFTreeViewModel: TreeViewModel {
                 lastModified: lastModified,
                 pdfCreationDate: meta.creationDate,
                 pdfModificationDate: meta.modificationDate,
-                pdfUrl: storedURL,
+                pdfRelativePath: relativePath,
+                isCloudFile: isCloudFile,
                 contentHash: hash,
                 thumbnailData: meta.thumbnailData
             )
@@ -171,13 +183,32 @@ class PDFTreeViewModel: TreeViewModel {
             modelContext.insert(item)
             
             // AI-Extraktion asynchron durchführen, falls aktiviert
-            if shouldExtractWithAI {
+            if shouldExtractWithAI, let pdfURL = item.pdfUrl {
                 Task {
-                    await extractAIMetadata(for: item, from: storedURL, apiKey: apiKey)
+                    await extractAIMetadata(for: item, from: pdfURL, apiKey: apiKey)
                 }
             }
         }
         try? modelContext.save()
+    }
+    
+    /// Extrahiert Metadaten mit Claude AI und aktualisiert das PDFItem.
+    /// Diese Methode kann sowohl intern beim Import als auch manuell von der UI aufgerufen werden.
+    func extractMetadata(for item: PDFItem) {
+        guard let pdfURL = item.pdfUrl else {
+            print("⚠️ Keine PDF-URL für Item: \(item.fileName)")
+            return
+        }
+        
+        let apiKey = UserDefaults.standard.string(forKey: "claudeAPIKey") ?? ""
+        guard !apiKey.isEmpty else {
+            print("⚠️ Kein Claude API-Schlüssel konfiguriert")
+            return
+        }
+        
+        Task {
+            await extractAIMetadata(for: item, from: pdfURL, apiKey: apiKey)
+        }
     }
     
     /// Extrahiert Metadaten mit Claude AI und aktualisiert das PDFItem.
@@ -268,7 +299,7 @@ class PDFTreeViewModel: TreeViewModel {
         let descriptor = FetchDescriptor<PDFItem>()
         if let items = try? modelContext.fetch(descriptor) {
             for item in items {
-                if let url = item.pdfUrl {
+                if item.isCloudFile, let url = item.pdfUrl {
                     PDFCloudStorage.removeFromCloud(at: url)
                 }
             }
@@ -283,31 +314,11 @@ class PDFTreeViewModel: TreeViewModel {
 
     /// Löscht ein einzelnes Item und – falls vorhanden – die zugehörige iCloud-Datei.
     func delete(item: PDFItem) {
-        if let url = item.pdfUrl {
+        if item.isCloudFile, let url = item.pdfUrl {
             PDFCloudStorage.removeFromCloud(at: url)
         }
         modelContext.delete(item)
         try? modelContext.save()
-    }
-    
-    /// Extrahiert Metadaten für ein einzelnes Item mit Claude AI.
-    func extractMetadata(for item: PDFItem) {
-        guard let url = item.pdfUrl else {
-            print("⚠️ Keine PDF-URL für Item: \(item.fileName)")
-            return
-        }
-        
-        let defaults = UserDefaults.standard
-        let apiKey = defaults.string(forKey: "claudeAPIKey") ?? ""
-        
-        guard !apiKey.isEmpty else {
-            print("⚠️ Kein API-Key konfiguriert")
-            return
-        }
-        
-        Task {
-            await extractAIMetadata(for: item, from: url, apiKey: apiKey)
-        }
     }
 
     private func observeStoreChanges() {

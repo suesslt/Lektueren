@@ -26,7 +26,14 @@ final class PDFItem: TreeItem {
     var lastModified: Date = Date()
     var pdfCreationDate: Date?
     var pdfModificationDate: Date?
-    var pdfUrl: URL? = nil
+    
+    /// Relativer Pfad zur PDF-Datei im iCloud-Container (nur Dateiname).
+    /// Die vollständige URL wird zur Laufzeit mit `pdfUrl` rekonstruiert.
+    var pdfRelativePath: String = ""
+    
+    /// Flag: true = Datei liegt in iCloud, false = lokale Datei
+    var isCloudFile: Bool = true
+    
     var contentHash: String = ""
     var thumbnailData: Data?
     var folder: PDFFolder?
@@ -37,6 +44,25 @@ final class PDFItem: TreeItem {
     var aiExtractedDate: Date?
     var aiSummary: String?
     var aiKeywords: [String] = []
+    
+    // MARK: - Computed URL
+    
+    /// Gibt die vollständige URL zur PDF-Datei zurück.
+    /// Für iCloud-Dateien wird die URL zur Laufzeit aus dem relativen Pfad rekonstruiert.
+    var pdfUrl: URL? {
+        guard !pdfRelativePath.isEmpty else { return nil }
+        
+        if isCloudFile {
+            // iCloud-URL zur Laufzeit rekonstruieren
+            guard let cloudDirectory = try? PDFCloudStorage.cloudPDFDirectory() else {
+                return nil
+            }
+            return cloudDirectory.appendingPathComponent(pdfRelativePath)
+        } else {
+            // Lokale Datei - relativer Pfad ist eigentlich die komplette URL als String
+            return URL(string: pdfRelativePath)
+        }
+    }
 
     init(
         title: String,
@@ -55,7 +81,8 @@ final class PDFItem: TreeItem {
         lastModified: Date = Date(),
         pdfCreationDate: Date? = nil,
         pdfModificationDate: Date? = nil,
-        pdfUrl: URL? = nil,
+        pdfRelativePath: String = "",
+        isCloudFile: Bool = true,
         contentHash: String = "",
         thumbnailData: Data? = nil
     ) {
@@ -75,7 +102,8 @@ final class PDFItem: TreeItem {
         self.lastModified = lastModified
         self.pdfCreationDate = pdfCreationDate
         self.pdfModificationDate = pdfModificationDate
-        self.pdfUrl = pdfUrl
+        self.pdfRelativePath = pdfRelativePath
+        self.isCloudFile = isCloudFile
         self.contentHash = contentHash
         self.thumbnailData = thumbnailData
     }
