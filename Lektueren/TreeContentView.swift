@@ -5,10 +5,11 @@
 //  Created by Thomas Süssli on 15.02.2026.
 //
 import SwiftUI
+import SwiftData
 
 struct TreeContentView<VM: TreeViewModel>: View
 where VM.Folder: Hashable {
-    @State var viewModel: VM
+    @Bindable var viewModel: VM
     @State private var selection: VM.Folder?
     @State private var isAddingFolder = false
 
@@ -26,6 +27,8 @@ where VM.Folder: Hashable {
                     }
                 }
             }
+            // Eindeutigen Identifier für jede Zeile, um korrekte Updates zu erzwingen
+            .id(folder.id)
         }
         .onAppear {
             // "Alle Lektüren" beim ersten Start automatisch auswählen
@@ -36,6 +39,22 @@ where VM.Folder: Hashable {
         }
         .onChange(of: selection) { _, newValue in
             viewModel.selectedFolder = newValue
+        }
+        .onChange(of: viewModel.selectedFolder) { _, newFolder in
+            // Wenn das ViewModel den selectedFolder ändert (z.B. bei deleteAll),
+            // müssen wir die UI-Selektion synchronisieren
+            if let newFolder, selection?.id != newFolder.id {
+                selection = newFolder
+            }
+        }
+        .onChange(of: viewModel.rootFolders) { _, _ in
+            // Wenn rootFolders sich ändern, sicherstellen, dass die Selektion noch gültig ist
+            if let currentSelection = selection,
+               !viewModel.rootFolders.contains(where: { $0.id == currentSelection.id }) {
+                // Aktuell selektierter Ordner existiert nicht mehr
+                selection = viewModel.rootFolders.first
+                viewModel.selectedFolder = selection
+            }
         }
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -91,9 +110,7 @@ private struct AddFolderView<Folder: TreeFolder & Hashable>: View {
                 }
             }
             .navigationTitle("Ordner erstellen")
-            #if os(iOS) || targetEnvironment(macCatalyst)
             .navigationBarTitleDisplayMode(.inline)
-            #endif
             .interactiveDismissDisabled(!trimmedName.isEmpty)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

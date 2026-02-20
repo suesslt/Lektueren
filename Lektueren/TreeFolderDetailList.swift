@@ -10,7 +10,7 @@ import UniformTypeIdentifiers
 struct TreeFolderDetailList<VM: TreeViewModel>: View
     where VM.Leaf: Hashable
 {
-    var viewModel: VM
+    @Bindable var viewModel: VM
     @State private var selection: VM.Leaf?
     @State private var isImporting = false
     @State private var isConfirmingDeleteAll = false
@@ -26,6 +26,7 @@ struct TreeFolderDetailList<VM: TreeViewModel>: View
                         NavigationLink(value: item) {
                             item.rowView
                         }
+                        .id(item.id)
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) {
                                 deleteItem(item)
@@ -46,12 +47,30 @@ struct TreeFolderDetailList<VM: TreeViewModel>: View
                         viewModel.selectedDetailItem = newValue
                     }
                 } else {
-                    ContentUnavailableView("Keine Einträge", systemImage: "tray")
+                    // Prüfen ob gerade gesucht wird
+                    if let pdfViewModel = viewModel as? PDFTreeViewModel,
+                       !pdfViewModel.searchText.isEmpty {
+                        ContentUnavailableView(
+                            "Keine Ergebnisse",
+                            systemImage: "magnifyingglass",
+                            description: Text("Keine Lektüren gefunden für '\(pdfViewModel.searchText)'")
+                        )
+                    } else {
+                        ContentUnavailableView("Keine Einträge", systemImage: "tray")
+                    }
                 }
             } else {
                 ContentUnavailableView("Ordner wählen", systemImage: "folder")
             }
         }
+        .searchable(
+            text: Binding(
+                get: { (viewModel as? PDFTreeViewModel)?.searchText ?? "" },
+                set: { (viewModel as? PDFTreeViewModel)?.searchText = $0 }
+            ),
+            placement: .navigationBarDrawer(displayMode: .always),
+            prompt: "Titel, Autor, Keywords..."
+        )
         .navigationTitle(title)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {

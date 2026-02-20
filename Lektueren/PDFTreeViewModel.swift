@@ -8,96 +8,67 @@ import SwiftUI
 import SwiftData
 import CryptoKit
 import PDFKit
+import UIKit
 
-/// Observable ViewModel, das Folder und PDFs direkt
-/// aus dem SwiftData / CloudKit Store fetcht.
-/// Der ModelContext wird bei der Initialisierung injiziert.
+/// Minimal ViewModel - Swift Data @Observable Updates propagieren automatisch
 @Observable
 @MainActor
 class PDFTreeViewModel: TreeViewModel {
     typealias Folder = PDFFolder
     typealias Leaf = PDFItem
 
-    private(set) var rootFolders: [PDFFolder] = []
     var selectedFolder: PDFFolder?
     var selectedDetailItem: PDFItem?
-
-    /// Die aktuell anzuzeigenden Items: Alle Items bei virtuellem Folder, sonst die des selektierten Folders.
-    var displayedItems: [PDFItem] {
-        guard let folder = selectedFolder else {
-            print("📋 [Display] Kein Ordner ausgewählt")
-            return []
-        }
-        
-        if folder.isVirtual {
-            var descriptor = FetchDescriptor<PDFItem>(sortBy: [SortDescriptor(\.title)])
-            let items = (try? modelContext.fetch(descriptor)) ?? []
-            print("📋 [Display] Virtueller Ordner 'Alle Lektüren': \(items.count) Items")
-            return items
-        }
-        
-        let items = folder.items ?? []
-        print("📋 [Display] Ordner '\(folder.name ?? "Unbenannt")': \(items.count) Items")
-        return items
-    }
-
-    /// Gesamtanzahl aller Items über alle Folders hinweg.
-    var totalItemCount: Int {
-        let descriptor = FetchDescriptor<PDFItem>()
-        return (try? modelContext.fetchCount(descriptor)) ?? 0
-    }
+    var searchText: String = ""
 
     private let modelContext: ModelContext
-    private nonisolated(unsafe) var notificationTask: Task<Void, Never>?
-
-    init(modelContext: ModelContext) {
-        self.modelContext = modelContext
-        fetchRootFolders()
-        observeStoreChanges()
-    }
-
-    deinit {
-        notificationTask?.cancel()
-    }
-
-    /// Sentinel-UUID, die `PDFFolder.isVirtual` erkennt. Muss mit dem Wert in `PDFFolder.isVirtual` übereinstimmen.
-    private static let virtualFolderID = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
-
-    /// Transientes (nicht persistiertes) Pseudo-Folder, das alle Lektüren aggregiert darstellt.
-    /// Die feste Sentinel-UUID stellt sicher, dass `isVirtual` zuverlässig `true` zurückgibt.
-    private let allItemsFolder: PDFFolder = PDFFolder(
+    
+    /// Virtuellerardner für "Alle Lektüren"
+    private(set) var allItemsFolder: PDFFolder = PDFFolder(
         name: "Alle Lektüren",
         id: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
     )
 
-    func fetchRootFolders() {
+    init(modelContext: ModelContext) {
+        self.modelContext = modelContext
+    }
+    
+    // MARK: - Computed Properties
+    
+    var rootFolders: [PDFFolder] {
         var descriptor = FetchDescriptor<PDFFolder>(
             predicate: #Predicate { $0.parent == nil },
             sortBy: [SortDescriptor(\.name)]
         )
-        descriptor.relationshipKeyPathsForPrefetching = [\.storedSubfolders, \.items]
-        
-        do {
-            let fetched = try modelContext.fetch(descriptor)
-            rootFolders = [allItemsFolder] + fetched
-            print("📂 [Fetch] Root-Ordner geladen: \(fetched.count)")
-            
-            // Items zählen
-            let itemDescriptor = FetchDescriptor<PDFItem>()
-            let itemCount = try modelContext.fetchCount(itemDescriptor)
-            print("📄 [Fetch] Gesamt-Items: \(itemCount)")
-            
-            // Details zu jedem Ordner
-            for folder in fetched {
-                let items = folder.items ?? []
-                print("📂 [Fetch]   - '\(folder.name ?? "Unbenannt")': \(items.count) Items")
-            }
-        } catch {
-            print("❌ [Fetch] Fehler beim Laden: \(error)")
-            rootFolders = [allItemsFolder]
-        }
+        let fetched = (try? modelContext.fetch(descriptor)) ?? []
+        return [allItemsFolder] + fetched
     }
-
+    
+    var displayedItems: [PDFItem] {
+        guard let folder = selectedFolder else { return [] }
+        
+        let items: [PDFItem]
+        if folder.isVirtual {
+            var descriptor = FetchDescriptor<PDFItem>(sortBy: [SortDescriptor(\.title)])
+            items = (try? modelContext.fetch(descriptor)) ?? []
+        } else {
+            let folderID = folder.id
+            var descriptor = FetchDescriptor<PDFItem>(
+                predicate: #Predicate<PDFItem> { $0.folder?.id == folderID },
+                sortBy: [SortDescriptor(\.title)]
+            )
+            items = (try? modelContext.fetch(descriptor)) ?? []
+        }
+        
+        return searchText.isEmpty ? items : items.filter { matchesSearchText($0) }
+    }
+    
+    var totalItemCount: Int {
+        (try? modelContext.fetchCount(FetchDescriptor<PDFItem>())) ?? 0
+    }
+    
+    // MARK: - Actions
+    
     func addFolder(name: String, parent: PDFFolder?) {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
@@ -105,16 +76,15 @@ class PDFTreeViewModel: TreeViewModel {
         modelContext.insert(newFolder)
         try? modelContext.save()
     }
-
+    
+    func fetchRootFolders() {
+        // Nicht benötigt - computed property
+    }
+    
     func importItems(from urls: [URL], into folder: PDFFolder?) {
-        // Alle bereits gespeicherten Hashes einmal laden — O(n) statt O(n²).
         let existingHashes = fetchExistingHashes()
-
-        // Ein virtueller Folder (z.B. "Alle Lektüren") wird nicht als Ziel gesetzt.
         let targetFolder: PDFFolder? = folder?.isVirtual == true ? nil : folder
         
-        // Settings für AI-Extraktion laden
-        // Standardwert ist true, falls noch nie gesetzt
         let defaults = UserDefaults.standard
         let enableAI = defaults.object(forKey: "enableAIExtraction") as? Bool ?? true
         let apiKey = defaults.string(forKey: "claudeAPIKey") ?? ""
@@ -125,37 +95,14 @@ class PDFTreeViewModel: TreeViewModel {
             defer { url.stopAccessingSecurityScopedResource() }
 
             guard let hash = sha256(for: url) else { continue }
-            guard !existingHashes.contains(hash) else { continue } // Duplikat überspringen
+            guard !existingHashes.contains(hash) else { continue }
 
             let fileName = url.lastPathComponent
             let fileSize = fileSizeString(for: url)
             let lastModified = (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? Date()
             let meta = pdfMetadata(for: url)
 
-            // Datei in den iCloud-Container kopieren (falls iCloud verfügbar).
-            // Wenn kein iCloud vorhanden ist, wird die originale URL beibehalten.
-            let relativePath: String
-            let isCloudFile: Bool
-            
-            if PDFCloudStorage.isAvailable {
-                do {
-                    let cloudURL = try PDFCloudStorage.copyToCloud(from: url)
-                    // Nur den Dateinamen (letzter Pfad-Komponente) speichern
-                    relativePath = cloudURL.lastPathComponent
-                    isCloudFile = true
-                    print("✅ In iCloud kopiert: \(relativePath)")
-                } catch {
-                    print("⚠️ iCloud-Kopie fehlgeschlagen für \(fileName): \(error.localizedDescription)")
-                    // Fallback: Absolute URL als String speichern
-                    relativePath = url.absoluteString
-                    isCloudFile = false
-                }
-            } else {
-                // Fallback: Absolute URL als String speichern
-                relativePath = url.absoluteString
-                isCloudFile = false
-                print("ℹ️ iCloud nicht verfügbar, lokale Datei: \(fileName)")
-            }
+            let (relativePath, isCloudFile) = copyToCloudIfAvailable(url: url, fileName: fileName)
 
             let item = PDFItem(
                 title: meta.title ?? url.deletingPathExtension().lastPathComponent,
@@ -182,7 +129,6 @@ class PDFTreeViewModel: TreeViewModel {
             item.folder = targetFolder
             modelContext.insert(item)
             
-            // AI-Extraktion asynchron durchführen, falls aktiviert
             if shouldExtractWithAI, let pdfURL = item.pdfUrl {
                 Task {
                     await extractAIMetadata(for: item, from: pdfURL, apiKey: apiKey)
@@ -192,53 +138,72 @@ class PDFTreeViewModel: TreeViewModel {
         try? modelContext.save()
     }
     
-    /// Extrahiert Metadaten mit Claude AI und aktualisiert das PDFItem.
-    /// Diese Methode kann sowohl intern beim Import als auch manuell von der UI aufgerufen werden.
-    func extractMetadata(for item: PDFItem) {
-        guard let pdfURL = item.pdfUrl else {
-            print("⚠️ Keine PDF-URL für Item: \(item.fileName)")
-            return
+    func delete(item: PDFItem) {
+        if item.isCloudFile, let url = item.pdfUrl {
+            PDFCloudStorage.removeFromCloud(at: url)
         }
+        modelContext.delete(item)
+        try? modelContext.save()
+    }
+    
+    func deleteAll() {
+        let descriptor = FetchDescriptor<PDFItem>()
+        if let items = try? modelContext.fetch(descriptor) {
+            for item in items {
+                if item.isCloudFile, let url = item.pdfUrl {
+                    PDFCloudStorage.removeFromCloud(at: url)
+                }
+            }
+        }
+        try? modelContext.delete(model: PDFItem.self)
+        try? modelContext.delete(model: PDFFolder.self)
+        try? modelContext.save()
         
+        selectedDetailItem = nil
+        selectedFolder = allItemsFolder
+    }
+    
+    func extractMetadata(for item: PDFItem) {
+        guard let pdfURL = item.pdfUrl else { return }
         let apiKey = UserDefaults.standard.string(forKey: "claudeAPIKey") ?? ""
-        guard !apiKey.isEmpty else {
-            print("⚠️ Kein Claude API-Schlüssel konfiguriert")
-            return
-        }
+        guard !apiKey.isEmpty else { return }
         
         Task {
             await extractAIMetadata(for: item, from: pdfURL, apiKey: apiKey)
         }
     }
     
-    /// Extrahiert Metadaten mit Claude AI und aktualisiert das PDFItem.
+    // MARK: - Private Helpers
+    
+    private func matchesSearchText(_ item: PDFItem) -> Bool {
+        let searchLower = searchText.lowercased()
+        return [item.title, item.aiExtractedTitle, item.author, item.aiExtractedAuthor, 
+                item.fileName, item.subject, item.creator, item.producer, item.aiSummary]
+            .compactMap { $0 }
+            .contains(where: { $0.lowercased().contains(searchLower) })
+            || (item.keywords + item.aiKeywords).contains(where: { $0.lowercased().contains(searchLower) })
+    }
+    
     private func extractAIMetadata(for item: PDFItem, from url: URL, apiKey: String) async {
         do {
-            print("🤖 Starte AI-Extraktion für: \(item.fileName)")
             let metadata = try await ClaudeService.shared.extractMetadata(from: url, apiKey: apiKey)
-            
-            // Item aktualisieren
             item.aiExtractedTitle = metadata.title
             item.aiExtractedAuthor = metadata.author
             item.aiExtractedDate = metadata.creationDate
             item.aiSummary = metadata.summary
             item.aiKeywords = metadata.keywords
-            
             try? modelContext.save()
-            print("✅ AI-Extraktion erfolgreich für: \(item.fileName)")
         } catch {
-            print("❌ AI-Extraktion fehlgeschlagen für \(item.fileName): \(error.localizedDescription)")
+            print("❌ AI-Extraktion fehlgeschlagen: \(error.localizedDescription)")
         }
     }
 
-    /// Berechnet den SHA-256-Hash des Dateiinhalts als Hex-String.
     private func sha256(for url: URL) -> String? {
         guard let data = try? Data(contentsOf: url, options: .mappedIfSafe) else { return nil }
         let digest = SHA256.hash(data: data)
         return digest.map { String(format: "%02x", $0) }.joined()
     }
 
-    /// Liest alle bereits gespeicherten Content-Hashes aus dem Store.
     private func fetchExistingHashes() -> Set<String> {
         var descriptor = FetchDescriptor<PDFItem>()
         descriptor.propertiesToFetch = [\.contentHash]
@@ -250,29 +215,41 @@ class PDFTreeViewModel: TreeViewModel {
         let bytes = (try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
         return ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file)
     }
+    
+    private func copyToCloudIfAvailable(url: URL, fileName: String) -> (String, Bool) {
+        guard PDFCloudStorage.isAvailable else {
+            return (url.absoluteString, false)
+        }
+        
+        do {
+            let cloudURL = try PDFCloudStorage.copyToCloud(from: url)
+            return (cloudURL.lastPathComponent, true)
+        } catch {
+            print("⚠️ iCloud-Kopie fehlgeschlagen: \(error.localizedDescription)")
+            return (url.absoluteString, false)
+        }
+    }
 
-    // Alle PDFKit-Metadaten in einem einzigen Durchgang — PDFDocument wird nur einmal geöffnet.
     private func pdfMetadata(for url: URL) -> PDFMetadata {
         guard let document = PDFDocument(url: url) else { return PDFMetadata() }
         let attrs = document.documentAttributes
-
         let page0 = document.page(at: 0)
         let bounds = page0?.bounds(for: .mediaBox)
 
-        // Thumbnail
         let thumbnailSize = CGSize(width: 120, height: 160)
         var thumbnailData: Data?
         if let page0, let thumbnail = Optional(page0.thumbnail(of: thumbnailSize, for: .mediaBox)) {
             thumbnailData = thumbnail.jpegData(compressionQuality: 0.7)
         }
 
-        // Keywords: PDFKit liefert entweder [String] oder einen einzelnen String
         var keywords: [String] = []
         if let raw = attrs?[PDFDocumentAttribute.keywordsAttribute] {
             if let array = raw as? [String] {
                 keywords = array
             } else if let single = raw as? String {
-                keywords = single.components(separatedBy: CharacterSet(charactersIn: ",;")).map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                keywords = single.components(separatedBy: CharacterSet(charactersIn: ",;"))
+                    .map { $0.trimmingCharacters(in: .whitespaces) }
+                    .filter { !$0.isEmpty }
             }
         }
 
@@ -292,53 +269,6 @@ class PDFTreeViewModel: TreeViewModel {
             modificationDate: attrs?[PDFDocumentAttribute.modificationDateAttribute] as? Date,
             thumbnailData: thumbnailData
         )
-    }
-
-    func deleteAll() {
-        // Zuerst alle iCloud-Dateien entfernen
-        let descriptor = FetchDescriptor<PDFItem>()
-        if let items = try? modelContext.fetch(descriptor) {
-            for item in items {
-                if item.isCloudFile, let url = item.pdfUrl {
-                    PDFCloudStorage.removeFromCloud(at: url)
-                }
-            }
-        }
-        try? modelContext.delete(model: PDFItem.self)
-        try? modelContext.delete(model: PDFFolder.self)
-        try? modelContext.save()
-        selectedFolder = nil
-        selectedDetailItem = nil
-        fetchRootFolders()
-    }
-
-    /// Löscht ein einzelnes Item und – falls vorhanden – die zugehörige iCloud-Datei.
-    func delete(item: PDFItem) {
-        if item.isCloudFile, let url = item.pdfUrl {
-            PDFCloudStorage.removeFromCloud(at: url)
-        }
-        modelContext.delete(item)
-        try? modelContext.save()
-    }
-
-    private func observeStoreChanges() {
-        notificationTask = Task { [weak self] in
-            let notifications = NotificationCenter.default.notifications(
-                named: ModelContext.didSave
-            )
-            for await notification in notifications {
-                print("💾 [Sync] ModelContext.didSave empfangen")
-                
-                // SwiftData verwendet andere Schlüssel als Core Data
-                if let userInfo = notification.userInfo {
-                    print("💾 [Sync]   UserInfo: \(userInfo.keys)")
-                }
-                
-                await MainActor.run {
-                    self?.fetchRootFolders()
-                }
-            }
-        }
     }
 }
 
@@ -360,6 +290,3 @@ private struct PDFMetadata {
     var modificationDate: Date?
     var thumbnailData: Data?
 }
-
-
-

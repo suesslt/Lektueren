@@ -27,14 +27,6 @@ struct TripleColumnLayout<VM: TreeViewModel, Detail: View>: View
                 .toolbar {
                     ToolbarItem(placement: .automatic) {
                         Button {
-                            print("🔄 [Refresh] Manueller Refresh ausgelöst")
-                            viewModel.fetchRootFolders()
-                        } label: {
-                            Label("Aktualisieren", systemImage: "arrow.clockwise")
-                        }
-                    }
-                    ToolbarItem(placement: .automatic) {
-                        Button {
                             showingSettings = true
                         } label: {
                             Label("Einstellungen", systemImage: "gear")
