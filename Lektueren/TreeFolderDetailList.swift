@@ -26,6 +26,21 @@ struct TreeFolderDetailList<VM: TreeViewModel>: View
                         NavigationLink(value: item) {
                             item.rowView
                         }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                deleteItem(item)
+                            } label: {
+                                Label("Löschen", systemImage: "trash")
+                            }
+                        }
+                        .swipeActions(edge: .leading, allowsFullSwipe: false) {
+                            Button {
+                                extractAIMetadata(for: item)
+                            } label: {
+                                Label("AI-Extraktion", systemImage: "sparkles")
+                            }
+                            .tint(.purple)
+                        }
                     }
                     .onChange(of: selection) { _, newValue in
                         viewModel.selectedDetailItem = newValue
@@ -76,5 +91,23 @@ struct TreeFolderDetailList<VM: TreeViewModel>: View
                 viewModel.importItems(from: urls, into: viewModel.selectedFolder)
             }
         }
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func deleteItem(_ item: VM.Leaf) {
+        guard let pdfViewModel = viewModel as? PDFTreeViewModel,
+              let pdfItem = item as? PDFItem else {
+            return
+        }
+        pdfViewModel.delete(item: pdfItem)
+    }
+    
+    private func extractAIMetadata(for item: VM.Leaf) {
+        guard let pdfViewModel = viewModel as? PDFTreeViewModel,
+              let pdfItem = item as? PDFItem else {
+            return
+        }
+        pdfViewModel.extractMetadata(for: pdfItem)
     }
 }

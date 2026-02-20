@@ -9,14 +9,14 @@ import SwiftUI
 struct TripleColumnLayout<VM: TreeViewModel, Detail: View>: View
     where VM.Folder: Hashable, VM.Leaf: Hashable
 {
-    @State var viewModel: VM
+    @Bindable var viewModel: VM
     @State private var columnVisibility = NavigationSplitViewVisibility.all
     @State private var showingSettings = false
 
     let detail: (VM.Leaf) -> Detail
 
     init(viewModel: VM, @ViewBuilder detail: @escaping (VM.Leaf) -> Detail) {
-        _viewModel = State(wrappedValue: viewModel)
+        _viewModel = Bindable(wrappedValue: viewModel)
         self.detail = detail
     }
 
@@ -25,6 +25,14 @@ struct TripleColumnLayout<VM: TreeViewModel, Detail: View>: View
             TreeContentView(viewModel: viewModel)
                 .navigationTitle("Bibliothek")
                 .toolbar {
+                    ToolbarItem(placement: .automatic) {
+                        Button {
+                            print("🔄 [Refresh] Manueller Refresh ausgelöst")
+                            viewModel.fetchRootFolders()
+                        } label: {
+                            Label("Aktualisieren", systemImage: "arrow.clockwise")
+                        }
+                    }
                     ToolbarItem(placement: .automatic) {
                         Button {
                             showingSettings = true

@@ -24,12 +24,21 @@ class PDFTreeViewModel: TreeViewModel {
 
     /// Die aktuell anzuzeigenden Items: Alle Items bei virtuellem Folder, sonst die des selektierten Folders.
     var displayedItems: [PDFItem] {
-        guard let folder = selectedFolder else { return [] }
+        guard let folder = selectedFolder else {
+            print("📋 [Display] Kein Ordner ausgewählt")
+            return []
+        }
+        
         if folder.isVirtual {
             var descriptor = FetchDescriptor<PDFItem>(sortBy: [SortDescriptor(\.title)])
-            return (try? modelContext.fetch(descriptor)) ?? []
+            let items = (try? modelContext.fetch(descriptor)) ?? []
+            print("📋 [Display] Virtueller Ordner 'Alle Lektüren': \(items.count) Items")
+            return items
         }
-        return folder.items ?? []
+        
+        let items = folder.items ?? []
+        print("📋 [Display] Ordner '\(folder.name ?? "Unbenannt")': \(items.count) Items")
+        return items
     }
 
     /// Gesamtanzahl aller Items über alle Folders hinweg.
@@ -67,8 +76,26 @@ class PDFTreeViewModel: TreeViewModel {
             sortBy: [SortDescriptor(\.name)]
         )
         descriptor.relationshipKeyPathsForPrefetching = [\.storedSubfolders, \.items]
-        let fetched = (try? modelContext.fetch(descriptor)) ?? []
-        rootFolders = [allItemsFolder] + fetched
+        
+        do {
+            let fetched = try modelContext.fetch(descriptor)
+            rootFolders = [allItemsFolder] + fetched
+            print("📂 [Fetch] Root-Ordner geladen: \(fetched.count)")
+            
+            // Items zählen
+            let itemDescriptor = FetchDescriptor<PDFItem>()
+            let itemCount = try modelContext.fetchCount(itemDescriptor)
+            print("📄 [Fetch] Gesamt-Items: \(itemCount)")
+            
+            // Details zu jedem Ordner
+            for folder in fetched {
+                let items = folder.items ?? []
+                print("📂 [Fetch]   - '\(folder.name ?? "Unbenannt")': \(items.count) Items")
+            }
+        } catch {
+            print("❌ [Fetch] Fehler beim Laden: \(error)")
+            rootFolders = [allItemsFolder]
+        }
     }
 
     func addFolder(name: String, parent: PDFFolder?) {
@@ -262,14 +289,43 @@ class PDFTreeViewModel: TreeViewModel {
         modelContext.delete(item)
         try? modelContext.save()
     }
+    
+    /// Extrahiert Metadaten für ein einzelnes Item mit Claude AI.
+    func extractMetadata(for item: PDFItem) {
+        guard let url = item.pdfUrl else {
+            print("⚠️ Keine PDF-URL für Item: \(item.fileName)")
+            return
+        }
+        
+        let defaults = UserDefaults.standard
+        let apiKey = defaults.string(forKey: "claudeAPIKey") ?? ""
+        
+        guard !apiKey.isEmpty else {
+            print("⚠️ Kein API-Key konfiguriert")
+            return
+        }
+        
+        Task {
+            await extractAIMetadata(for: item, from: url, apiKey: apiKey)
+        }
+    }
 
     private func observeStoreChanges() {
         notificationTask = Task { [weak self] in
             let notifications = NotificationCenter.default.notifications(
                 named: ModelContext.didSave
             )
-            for await _ in notifications {
-                self?.fetchRootFolders()
+            for await notification in notifications {
+                print("💾 [Sync] ModelContext.didSave empfangen")
+                
+                // SwiftData verwendet andere Schlüssel als Core Data
+                if let userInfo = notification.userInfo {
+                    print("💾 [Sync]   UserInfo: \(userInfo.keys)")
+                }
+                
+                await MainActor.run {
+                    self?.fetchRootFolders()
+                }
             }
         }
     }

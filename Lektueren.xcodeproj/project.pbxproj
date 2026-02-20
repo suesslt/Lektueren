@@ -6,11 +6,6 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		B59F5C4D2F489F8E0064E774 /* ClaudeService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B59F5C4C2F489F8E0064E774 /* ClaudeService.swift */; };
-		B59F5C4F2F489FA60064E774 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B59F5C4E2F489FA60064E774 /* SettingsView.swift */; };
-/* End PBXBuildFile section */
-
 /* Begin PBXContainerItemProxy section */
 		B59EAAE12F412EFD000A3263 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -32,8 +27,6 @@
 		B59EAACF2F412EFB000A3263 /* Lektueren.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Lektueren.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B59EAAE02F412EFD000A3263 /* LektuerenTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LektuerenTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B59EAAEA2F412EFD000A3263 /* LektuerenUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LektuerenUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		B59F5C4C2F489F8E0064E774 /* ClaudeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeService.swift; sourceTree = "<group>"; };
-		B59F5C4E2F489FA60064E774 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -99,8 +92,6 @@
 				B59EAAE32F412EFD000A3263 /* LektuerenTests */,
 				B59EAAED2F412EFD000A3263 /* LektuerenUITests */,
 				B59EAAD02F412EFB000A3263 /* Products */,
-				B59F5C4C2F489F8E0064E774 /* ClaudeService.swift */,
-				B59F5C4E2F489FA60064E774 /* SettingsView.swift */,
 			);
 			sourceTree = "<group>";
 		};
@@ -258,8 +249,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B59F5C4D2F489F8E0064E774 /* ClaudeService.swift in Sources */,
-				B59F5C4F2F489FA60064E774 /* SettingsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

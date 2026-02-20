@@ -7,7 +7,7 @@
 import Foundation
 
 @MainActor
-protocol TreeViewModel: AnyObject {
+protocol TreeViewModel: AnyObject, Observable {
     associatedtype Folder: TreeFolder & Hashable & Identifiable
     associatedtype Leaf: TreeItem & Hashable & Identifiable where Folder.Leaf == Leaf
 
@@ -29,6 +29,8 @@ protocol TreeViewModel: AnyObject {
     /// Importiert Items aus den angegebenen URLs in den angegebenen Ordner.
     /// Wird `nil` übergeben, werden die Items ohne Ordner-Zuordnung gespeichert.
     func importItems(from urls: [URL], into folder: Folder?)
+
+    func fetchRootFolders()
 
     func deleteAll()
 }

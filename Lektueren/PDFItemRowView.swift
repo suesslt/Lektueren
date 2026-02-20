@@ -8,6 +8,8 @@ import SwiftUI
 
 struct PDFItemRowView: View {
     let document: PDFItem
+    var onDelete: (() -> Void)?
+    var onAIExtract: (() -> Void)?
 
     var body: some View {
         HStack(spacing: 12) {
@@ -19,22 +21,34 @@ struct PDFItemRowView: View {
 
             // Info
             VStack(alignment: .leading, spacing: 4) {
-                Text(document.title ?? document.fileName)
+                // Titel: AI-Titel falls vorhanden, sonst PDF-Titel, sonst Dateiname
+                Text(displayTitle)
                     .font(.body)
                     .lineLimit(2)
 
+                // Autor: AI-Autor falls vorhanden, sonst PDF-Autor
+                if let author = displayAuthor {
+                    Text(author)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                
+                // Datum und Seitenanzahl in einer Zeile
                 HStack(spacing: 8) {
-                    if let author = document.author, !author.isEmpty {
-                        Text(author)
+                    // Erstellungsdatum: AI-Datum falls vorhanden, sonst PDF-Datum
+                    if let date = displayCreationDate {
+                        Text(date.formatted(date: .abbreviated, time: .omitted))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
-
+                    
                     if document.pageCount > 0 {
-                        Text("•")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-
+                        if displayCreationDate != nil {
+                            Text("•")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        
                         Text("\(document.pageCount) Seiten")
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -44,6 +58,54 @@ struct PDFItemRowView: View {
             Spacer()
         }
         .padding(.vertical, 4)
+        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+            if let onDelete {
+                Button(role: .destructive) {
+                    onDelete()
+                } label: {
+                    Label("Löschen", systemImage: "trash")
+                }
+            }
+        }
+        .swipeActions(edge: .leading, allowsFullSwipe: false) {
+            if let onAIExtract {
+                Button {
+                    onAIExtract()
+                } label: {
+                    Label("AI-Extraktion", systemImage: "sparkles")
+                }
+                .tint(.purple)
+            }
+        }
+    }
+    
+    // MARK: - Computed Properties
+    
+    /// Titel: Priorität AI → PDF → Dateiname
+    private var displayTitle: String {
+        if let aiTitle = document.aiExtractedTitle, !aiTitle.isEmpty {
+            return aiTitle
+        }
+        return document.title ?? document.fileName
+    }
+    
+    /// Autor: Priorität AI → PDF
+    private var displayAuthor: String? {
+        if let aiAuthor = document.aiExtractedAuthor, !aiAuthor.isEmpty {
+            return aiAuthor
+        }
+        if let pdfAuthor = document.author, !pdfAuthor.isEmpty {
+            return pdfAuthor
+        }
+        return nil
+    }
+    
+    /// Erstellungsdatum: Priorität AI → PDF
+    private var displayCreationDate: Date? {
+        if let aiDate = document.aiExtractedDate {
+            return aiDate
+        }
+        return document.pdfCreationDate
     }
 }
 
