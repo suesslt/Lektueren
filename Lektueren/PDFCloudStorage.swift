@@ -2,8 +2,9 @@
 //  PDFCloudStorage.swift
 //  Lektüren
 //
-//  Verwaltet das Kopieren von PDF-Dateien in den App-spezifischen
-//  iCloud-Drive-Container, damit sie geräteübergreifend verfügbar sind.
+//  Verwaltet das Kopieren von PDF-Dateien in den iCloud-Drive-Container,
+//  damit sie geräteübergreifend verfügbar sind und direkt neben Numbers,
+//  Keynote etc. im iCloud Drive-Root erscheinen.
 //
 //  VORAUSSETZUNGEN (müssen alle erfüllt sein):
 //  ─────────────────────────────────────────
@@ -11,16 +12,16 @@
 //       • iCloud Capability hinzufügen
 //       • "CloudKit" angehakt          → synchronisiert SwiftData-Metadaten
 //       • "iCloud Documents" angehakt  → synchronisiert PDF-Dateien
-//       • Container: iCloud.com.intoo.Lektueren
+//       • Container: iCloud.com.suessli.Lektueren
 //
 //  2. Apple Developer Portal → Identifiers → deine App-ID:
 //       • iCloud aktiviert
-//       • Container "iCloud.com.intoo.Lektueren" erstellt UND verknüpft
+//       • Container "iCloud.com.suessli.Lektueren" erstellt UND verknüpft
 //
 //  3. Info.plist muss den NSUbiquitousContainers-Eintrag enthalten:
 //       <key>NSUbiquitousContainers</key>
 //       <dict>
-//           <key>iCloud.com.intoo.Lektueren</key>
+//           <key>iCloud.com.suessli.Lektueren</key>
 //           <dict>
 //               <key>NSUbiquitousContainerIsDocumentScopePublic</key>
 //               <true/>
@@ -30,6 +31,9 @@
 //               <string>Any</string>
 //           </dict>
 //       </dict>
+//
+//  WICHTIG: Durch Speicherung direkt im "Documents"-Ordner des Containers
+//  erscheint der Ordner "Lektüren" im iCloud Drive-Root (wie Numbers, Keynote).
 //
 import Foundation
 
@@ -96,10 +100,13 @@ struct PDFCloudStorage {
 
     /// Die Container-ID muss exakt mit dem Eintrag in der iCloud-Capability
     /// und im Developer Portal übereinstimmen.
+    /// Wichtig: Für sichtbare Ordner im iCloud Drive (wie Numbers, Keynote)
+    /// muss die Container-ID mit "iCloud." + BundleIdentifier übereinstimmen.
     static let containerIdentifier = "iCloud.com.suessli.Lektueren"
 
-    /// Unterordner im iCloud-Container, in dem alle PDFs abgelegt werden.
-    private static let pdfSubdirectory = "PDFs"
+    /// Name des Ordners, der direkt im iCloud Drive-Root erscheint.
+    /// Dieser wird in der Dateien-App neben Numbers, Keynote etc. angezeigt.
+    private static let appFolderName = "Lektüren"
 
     // MARK: - Diagnostics
 
@@ -121,9 +128,9 @@ struct PDFCloudStorage {
         }
 
         // Schritt 3: Existiert das Zielverzeichnis bereits?
+        // Verwende "Documents" für Sichtbarkeit im iCloud Drive-Root
         let directoryURL = containerURL
             .appendingPathComponent("Documents", isDirectory: true)
-            .appendingPathComponent(pdfSubdirectory, isDirectory: true)
 
         guard FileManager.default.fileExists(atPath: directoryURL.path) else {
             return .containerFoundNoDirectory
@@ -150,6 +157,8 @@ struct PDFCloudStorage {
 
     /// Gibt die URL des iCloud-PDF-Verzeichnisses zurück.
     /// Erstellt das Verzeichnis, falls es noch nicht existiert.
+    /// Die PDFs werden direkt im "Documents"-Ordner des iCloud-Containers gespeichert,
+    /// was sie im iCloud Drive-Root sichtbar macht (wie Numbers, Keynote etc.).
     /// - Throws: `PDFCloudStorageError`
     static func cloudPDFDirectory() throws -> URL {
         guard FileManager.default.ubiquityIdentityToken != nil else {
@@ -162,9 +171,9 @@ struct PDFCloudStorage {
             throw PDFCloudStorageError.containerNotFound(identifier: containerIdentifier)
         }
 
+        // Speichere direkt im "Documents"-Ordner, um im iCloud Drive-Root sichtbar zu sein
         let pdfDirectoryURL = containerURL
             .appendingPathComponent("Documents", isDirectory: true)
-            .appendingPathComponent(pdfSubdirectory, isDirectory: true)
 
         try FileManager.default.createDirectory(
             at: pdfDirectoryURL,

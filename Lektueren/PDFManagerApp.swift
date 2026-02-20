@@ -15,12 +15,8 @@ struct PDFManagerApp: App {
             PDFFolder.self,
             PDFItem.self,
         ])
-        // CloudKit-Sync: cloudKitDatabase auf .automatic setzen.
-        // Voraussetzung: CloudKit-Capability im Xcode-Target aktiviert
-        // und ein iCloud-Container z. B. "iCloud.com.yourcompany.Lektueren" eingetragen.
         let modelConfiguration = ModelConfiguration(
             schema: schema,
-            isStoredInMemoryOnly: false,
             cloudKitDatabase: .automatic
         )
 
