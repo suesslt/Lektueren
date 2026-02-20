@@ -85,6 +85,13 @@ class PDFTreeViewModel: TreeViewModel {
 
         // Ein virtueller Folder (z.B. "Alle Lektüren") wird nicht als Ziel gesetzt.
         let targetFolder: PDFFolder? = folder?.isVirtual == true ? nil : folder
+        
+        // Settings für AI-Extraktion laden
+        // Standardwert ist true, falls noch nie gesetzt
+        let defaults = UserDefaults.standard
+        let enableAI = defaults.object(forKey: "enableAIExtraction") as? Bool ?? true
+        let apiKey = defaults.string(forKey: "claudeAPIKey") ?? ""
+        let shouldExtractWithAI = enableAI && !apiKey.isEmpty
 
         for url in urls {
             guard url.startAccessingSecurityScopedResource() else { continue }
@@ -135,8 +142,35 @@ class PDFTreeViewModel: TreeViewModel {
             )
             item.folder = targetFolder
             modelContext.insert(item)
+            
+            // AI-Extraktion asynchron durchführen, falls aktiviert
+            if shouldExtractWithAI {
+                Task {
+                    await extractAIMetadata(for: item, from: storedURL, apiKey: apiKey)
+                }
+            }
         }
         try? modelContext.save()
+    }
+    
+    /// Extrahiert Metadaten mit Claude AI und aktualisiert das PDFItem.
+    private func extractAIMetadata(for item: PDFItem, from url: URL, apiKey: String) async {
+        do {
+            print("🤖 Starte AI-Extraktion für: \(item.fileName)")
+            let metadata = try await ClaudeService.shared.extractMetadata(from: url, apiKey: apiKey)
+            
+            // Item aktualisieren
+            item.aiExtractedTitle = metadata.title
+            item.aiExtractedAuthor = metadata.author
+            item.aiExtractedDate = metadata.creationDate
+            item.aiSummary = metadata.summary
+            item.aiKeywords = metadata.keywords
+            
+            try? modelContext.save()
+            print("✅ AI-Extraktion erfolgreich für: \(item.fileName)")
+        } catch {
+            print("❌ AI-Extraktion fehlgeschlagen für \(item.fileName): \(error.localizedDescription)")
+        }
     }
 
     /// Berechnet den SHA-256-Hash des Dateiinhalts als Hex-String.

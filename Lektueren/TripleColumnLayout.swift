@@ -11,6 +11,7 @@ struct TripleColumnLayout<VM: TreeViewModel, Detail: View>: View
 {
     @State var viewModel: VM
     @State private var columnVisibility = NavigationSplitViewVisibility.all
+    @State private var showingSettings = false
 
     let detail: (VM.Leaf) -> Detail
 
@@ -23,6 +24,18 @@ struct TripleColumnLayout<VM: TreeViewModel, Detail: View>: View
         NavigationSplitView(columnVisibility: $columnVisibility) {
             TreeContentView(viewModel: viewModel)
                 .navigationTitle("Bibliothek")
+                .toolbar {
+                    ToolbarItem(placement: .automatic) {
+                        Button {
+                            showingSettings = true
+                        } label: {
+                            Label("Einstellungen", systemImage: "gear")
+                        }
+                    }
+                }
+                .sheet(isPresented: $showingSettings) {
+                    SettingsView()
+                }
         } content: {
             TreeFolderDetailList(viewModel: viewModel)
         } detail: {

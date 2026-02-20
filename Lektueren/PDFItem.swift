@@ -30,6 +30,13 @@ final class PDFItem: TreeItem {
     var contentHash: String = ""
     var thumbnailData: Data?
     var folder: PDFFolder?
+    
+    // MARK: - AI-extrahierte Metadaten
+    var aiExtractedTitle: String?
+    var aiExtractedAuthor: String?
+    var aiExtractedDate: Date?
+    var aiSummary: String?
+    var aiKeywords: [String] = []
 
     init(
         title: String,

@@ -118,6 +118,52 @@ private struct PDFInspectorView: View {
                 .listRowBackground(Color.clear)
                 .padding(.vertical, 6)
             }
+            
+            // MARK: AI-Extraktion
+            if hasAIData {
+                Section("AI-Analyse") {
+                    if let aiTitle = item.aiExtractedTitle {
+                        LabeledContent("Titel (AI)", value: aiTitle)
+                    }
+                    if let aiAuthor = item.aiExtractedAuthor {
+                        LabeledContent("Autor (AI)", value: aiAuthor)
+                    }
+                    if let aiDate = item.aiExtractedDate {
+                        LabeledContent("Erstellt (AI)") {
+                            Text(aiDate.formatted(date: .abbreviated, time: .omitted))
+                        }
+                    }
+                    if let summary = item.aiSummary, !summary.isEmpty {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Zusammenfassung")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text(summary)
+                                .font(.subheadline)
+                        }
+                        .padding(.vertical, 4)
+                    }
+                    if !item.aiKeywords.isEmpty {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Keywords (AI)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            FlowLayout(spacing: 6) {
+                                ForEach(item.aiKeywords, id: \.self) { keyword in
+                                    Text(keyword)
+                                        .font(.caption)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 4)
+                                        .background(Color.accentColor.opacity(0.15))
+                                        .foregroundStyle(Color.accentColor)
+                                        .clipShape(Capsule())
+                                }
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+            }
 
             // MARK: Allgemein
             Section("Allgemein") {
@@ -202,4 +248,60 @@ private struct PDFInspectorView: View {
         .listStyle(.insetGrouped)
         .navigationTitle("Informationen")
     }
+    
+    private var hasAIData: Bool {
+        item.aiExtractedTitle != nil ||
+        item.aiExtractedAuthor != nil ||
+        item.aiExtractedDate != nil ||
+        item.aiSummary != nil ||
+        !item.aiKeywords.isEmpty
+    }
 }
+// MARK: - FlowLayout
+
+/// Einfaches Flow-Layout für Keywords (wrapped horizontal)
+private struct FlowLayout: Layout {
+    var spacing: CGFloat = 8
+    
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let result = FlowResult(in: proposal.replacingUnspecifiedDimensions().width, subviews: subviews, spacing: spacing)
+        return result.size
+    }
+    
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let result = FlowResult(in: bounds.width, subviews: subviews, spacing: spacing)
+        for (index, subview) in subviews.enumerated() {
+            subview.place(at: CGPoint(x: bounds.minX + result.frames[index].minX, 
+                                     y: bounds.minY + result.frames[index].minY), 
+                         proposal: .unspecified)
+        }
+    }
+    
+    struct FlowResult {
+        var frames: [CGRect] = []
+        var size: CGSize = .zero
+        
+        init(in maxWidth: CGFloat, subviews: Subviews, spacing: CGFloat) {
+            var currentX: CGFloat = 0
+            var currentY: CGFloat = 0
+            var lineHeight: CGFloat = 0
+            
+            for subview in subviews {
+                let size = subview.sizeThatFits(.unspecified)
+                
+                if currentX + size.width > maxWidth && currentX > 0 {
+                    currentX = 0
+                    currentY += lineHeight + spacing
+                    lineHeight = 0
+                }
+                
+                frames.append(CGRect(x: currentX, y: currentY, width: size.width, height: size.height))
+                lineHeight = max(lineHeight, size.height)
+                currentX += size.width + spacing
+            }
+            
+            self.size = CGSize(width: maxWidth, height: currentY + lineHeight)
+        }
+    }
+}
+
