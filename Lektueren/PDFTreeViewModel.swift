@@ -23,6 +23,8 @@ class PDFTreeViewModel: TreeViewModel {
 
     /// Manuelle Trigger-Variable, damit @Observable erkennt, dass rootFolders sich ändert.
     private var folderRefreshCounter: Int = 0
+    /// Manuelle Trigger-Variable für displayedItems und totalItemCount.
+    private var itemRefreshCounter: Int = 0
 
     private let modelContext: ModelContext
     
@@ -49,6 +51,7 @@ class PDFTreeViewModel: TreeViewModel {
     }
     
     var displayedItems: [PDFItem] {
+        _ = itemRefreshCounter
         guard let folder = selectedFolder else { return [] }
         
         let items: [PDFItem]
@@ -68,7 +71,8 @@ class PDFTreeViewModel: TreeViewModel {
     }
     
     var totalItemCount: Int {
-        (try? modelContext.fetchCount(FetchDescriptor<PDFItem>())) ?? 0
+        _ = itemRefreshCounter
+        return (try? modelContext.fetchCount(FetchDescriptor<PDFItem>())) ?? 0
     }
     
     // MARK: - Actions
@@ -87,28 +91,40 @@ class PDFTreeViewModel: TreeViewModel {
     }
     
     func importItems(from urls: [URL], into folder: PDFFolder?) {
+        Task {
+            await performImport(from: urls, into: folder)
+        }
+    }
+
+    /// Progressiver Import: Jedes PDF wird einzeln importiert und gespeichert,
+    /// damit es sofort in der Liste erscheint. AI-Extraktion startet erst nach
+    /// Abschluss aller Imports.
+    private func performImport(from urls: [URL], into folder: PDFFolder?) async {
         let existingHashes = fetchExistingHashes()
         let targetFolder: PDFFolder? = folder?.isVirtual == true ? nil : folder
-        
-        let defaults = UserDefaults.standard
-        let enableAI = defaults.object(forKey: "enableAIExtraction") as? Bool ?? true
-        let apiKey = defaults.string(forKey: "claudeAPIKey") ?? ""
-        let shouldExtractWithAI = enableAI && !apiKey.isEmpty
+
+        var importedItems: [(PDFItem, URL)] = []
 
         for url in urls {
             guard url.startAccessingSecurityScopedResource() else { continue }
-            defer { url.stopAccessingSecurityScopedResource() }
 
-            guard let hash = sha256(for: url) else { continue }
-            guard !existingHashes.contains(hash) else { continue }
+            guard let hash = sha256(for: url) else {
+                url.stopAccessingSecurityScopedResource()
+                continue
+            }
+            guard !existingHashes.contains(hash) else {
+                url.stopAccessingSecurityScopedResource()
+                continue
+            }
 
             let fileName = url.lastPathComponent
             let fileSize = fileSizeString(for: url)
             let lastModified = (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? Date()
             let meta = pdfMetadata(for: url)
-
             let sourceFilePath = url.path(percentEncoded: false)
             let (relativePath, isCloudFile) = copyToCloudIfAvailable(url: url, fileName: fileName)
+
+            url.stopAccessingSecurityScopedResource()
 
             let item = PDFItem(
                 title: meta.title ?? url.deletingPathExtension().lastPathComponent,
@@ -135,22 +151,41 @@ class PDFTreeViewModel: TreeViewModel {
             item.sourceFilePath = sourceFilePath
             item.folder = targetFolder
             modelContext.insert(item)
-            
-            if shouldExtractWithAI, let pdfURL = item.pdfUrl {
-                Task {
-                    await extractAIMetadata(for: item, from: pdfURL, apiKey: apiKey)
-                }
+            try? modelContext.save()
+            itemRefreshCounter += 1
+
+            if let pdfURL = item.pdfUrl {
+                importedItems.append((item, pdfURL))
+            }
+
+            // UI-Thread freigeben, damit die Liste aktualisiert wird
+            await Task.yield()
+        }
+
+        // Phase 2: AI-Extraktion sequenziell nach Abschluss aller Imports
+        let defaults = UserDefaults.standard
+        let enableAI = defaults.object(forKey: "enableAIExtraction") as? Bool ?? true
+        let apiKey = defaults.string(forKey: "claudeAPIKey") ?? ""
+
+        if enableAI && !apiKey.isEmpty {
+            for (item, pdfURL) in importedItems {
+                item.isAIProcessing = true
+                await extractAIMetadata(for: item, from: pdfURL, apiKey: apiKey)
+                item.isAIProcessing = false
             }
         }
-        try? modelContext.save()
     }
     
     func delete(item: PDFItem) {
         if item.isCloudFile, let url = item.pdfUrl {
             PDFCloudStorage.removeFromCloud(at: url)
         }
+        if selectedDetailItem?.id == item.id {
+            selectedDetailItem = nil
+        }
         modelContext.delete(item)
         try? modelContext.save()
+        itemRefreshCounter += 1
     }
     
     func deleteAll() {
@@ -169,6 +204,7 @@ class PDFTreeViewModel: TreeViewModel {
         selectedDetailItem = nil
         selectedFolder = allItemsFolder
         folderRefreshCounter += 1
+        itemRefreshCounter += 1
     }
     
     func extractMetadata(for item: PDFItem) {
@@ -177,7 +213,9 @@ class PDFTreeViewModel: TreeViewModel {
         guard !apiKey.isEmpty else { return }
 
         Task {
+            item.isAIProcessing = true
             await extractAIMetadata(for: item, from: pdfURL, apiKey: apiKey)
+            item.isAIProcessing = false
         }
     }
 
@@ -209,6 +247,7 @@ class PDFTreeViewModel: TreeViewModel {
         let targetFolder: PDFFolder? = folder?.isVirtual == true ? nil : folder
         item.folder = targetFolder
         try? modelContext.save()
+        itemRefreshCounter += 1
     }
 
     /// Sucht ein PDFItem anhand seiner UUID.

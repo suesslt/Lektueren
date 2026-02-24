@@ -85,6 +85,8 @@ private struct PDFKitView: View {
 private struct iOSPDFView: UIViewRepresentable {
     let url: URL
 
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
     func makeUIView(context: Context) -> PDFView {
         let view = PDFView()
         view.autoScales = true
@@ -95,10 +97,21 @@ private struct iOSPDFView: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: PDFView, context: Context) {
-        if uiView.document?.documentURL != url {
-            uiView.document = nil
-            uiView.document = PDFDocument(url: url)
+        guard uiView.document?.documentURL != url else { return }
+        let targetURL = url
+        context.coordinator.currentURL = targetURL
+        uiView.document = nil
+        Task.detached {
+            let doc = PDFDocument(url: targetURL)
+            await MainActor.run {
+                guard context.coordinator.currentURL == targetURL else { return }
+                uiView.document = doc
+            }
         }
+    }
+
+    class Coordinator {
+        var currentURL: URL?
     }
 }
 

@@ -41,6 +41,9 @@ final class PDFItem: TreeItem {
     /// Pfad zur Originaldatei (z.B. Downloads-Ordner) — zum nachträglichen Löschen.
     var sourceFilePath: String?
     
+    // MARK: - AI-Status (nicht persistiert)
+    @Transient var isAIProcessing: Bool = false
+
     // MARK: - AI-extrahierte Metadaten
     var aiExtractedTitle: String?
     var aiExtractedAuthor: String?

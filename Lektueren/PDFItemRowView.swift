@@ -56,6 +56,11 @@ struct PDFItemRowView: View {
                 }
             }
             Spacer()
+            if document.isAIProcessing {
+                ProgressView()
+                    .controlSize(.small)
+                    .padding(.trailing, 4)
+            }
         }
         .padding(.vertical, 4)
         .swipeActions(edge: .trailing, allowsFullSwipe: true) {

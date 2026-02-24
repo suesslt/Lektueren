@@ -15,6 +15,7 @@ struct TreeFolderDetailList<VM: TreeViewModel>: View
     @State private var isImporting = false
     @State private var isConfirmingDeleteAll = false
     @State private var originalFileDeleteResult: OriginalFileDeleteResult?
+    @FocusState private var isListFocused: Bool
 
     private enum OriginalFileDeleteResult: Identifiable {
         case success(String)
@@ -91,8 +92,30 @@ struct TreeFolderDetailList<VM: TreeViewModel>: View
         List(items, selection: $selection) { item in
             itemRow(item)
         }
+        .focusable()
+        .focused($isListFocused)
+        .onAppear { isListFocused = true }
         .onChange(of: selection) { _, newValue in
             viewModel.selectedDetailItem = newValue
+        }
+        .onKeyPress(.upArrow) {
+            moveSelection(by: -1, in: items)
+            return .handled
+        }
+        .onKeyPress(.downArrow) {
+            moveSelection(by: 1, in: items)
+            return .handled
+        }
+    }
+
+    private func moveSelection(by offset: Int, in items: [VM.Leaf]) {
+        guard !items.isEmpty else { return }
+        if let current = selection,
+           let currentIndex = items.firstIndex(where: { $0.id == current.id }) {
+            let newIndex = max(0, min(items.count - 1, currentIndex + offset))
+            selection = items[newIndex]
+        } else {
+            selection = items[0]
         }
     }
 

@@ -13,6 +13,7 @@ where VM.Folder: Hashable {
     @Bindable var viewModel: VM
     @State private var selection: VM.Folder?
     @State private var isAddingFolder = false
+    @FocusState private var isTreeFocused: Bool
 
     var body: some View {
         List(viewModel.rootFolders, children: \.subfolders, selection: $selection) { folder in
@@ -48,7 +49,18 @@ where VM.Folder: Hashable {
                 // Optional: visuelles Feedback könnte hier ergänzt werden
             }
         }
+        .focusable()
+        .focused($isTreeFocused)
+        .onKeyPress(.upArrow) {
+            moveFolderSelection(by: -1)
+            return .handled
+        }
+        .onKeyPress(.downArrow) {
+            moveFolderSelection(by: 1)
+            return .handled
+        }
         .onAppear {
+            isTreeFocused = true
             // "Alle Lektüren" beim ersten Start automatisch auswählen
             if selection == nil, let firstFolder = viewModel.rootFolders.first {
                 selection = firstFolder
@@ -95,6 +107,31 @@ where VM.Folder: Hashable {
                 }
             )
         }
+    }
+
+    // MARK: - Arrow Key Navigation
+
+    private func moveFolderSelection(by offset: Int) {
+        let flat = flattenedFolders(viewModel.rootFolders)
+        guard !flat.isEmpty else { return }
+        if let current = selection,
+           let currentIndex = flat.firstIndex(where: { $0.id == current.id }) {
+            let newIndex = max(0, min(flat.count - 1, currentIndex + offset))
+            selection = flat[newIndex]
+        } else {
+            selection = flat[0]
+        }
+    }
+
+    private func flattenedFolders(_ folders: [VM.Folder]) -> [VM.Folder] {
+        var result: [VM.Folder] = []
+        for folder in folders {
+            result.append(folder)
+            if let subs = folder.subfolders {
+                result.append(contentsOf: flattenedFolders(subs))
+            }
+        }
+        return result
     }
 }
 
