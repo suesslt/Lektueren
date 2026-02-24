@@ -37,6 +37,9 @@ final class PDFItem: TreeItem {
     var contentHash: String = ""
     var thumbnailData: Data?
     var folder: PDFFolder?
+
+    /// Pfad zur Originaldatei (z.B. Downloads-Ordner) — zum nachträglichen Löschen.
+    var sourceFilePath: String?
     
     // MARK: - AI-extrahierte Metadaten
     var aiExtractedTitle: String?

@@ -21,6 +21,9 @@ class PDFTreeViewModel: TreeViewModel {
     var selectedDetailItem: PDFItem?
     var searchText: String = ""
 
+    /// Manuelle Trigger-Variable, damit @Observable erkennt, dass rootFolders sich ändert.
+    private var folderRefreshCounter: Int = 0
+
     private let modelContext: ModelContext
     
     /// Virtuellerardner für "Alle Lektüren"
@@ -36,6 +39,7 @@ class PDFTreeViewModel: TreeViewModel {
     // MARK: - Computed Properties
     
     var rootFolders: [PDFFolder] {
+        _ = folderRefreshCounter
         var descriptor = FetchDescriptor<PDFFolder>(
             predicate: #Predicate { $0.parent == nil },
             sortBy: [SortDescriptor(\.name)]
@@ -75,6 +79,7 @@ class PDFTreeViewModel: TreeViewModel {
         let newFolder = PDFFolder(name: trimmed, parent: parent)
         modelContext.insert(newFolder)
         try? modelContext.save()
+        folderRefreshCounter += 1
     }
     
     func fetchRootFolders() {
@@ -102,6 +107,7 @@ class PDFTreeViewModel: TreeViewModel {
             let lastModified = (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? Date()
             let meta = pdfMetadata(for: url)
 
+            let sourceFilePath = url.path(percentEncoded: false)
             let (relativePath, isCloudFile) = copyToCloudIfAvailable(url: url, fileName: fileName)
 
             let item = PDFItem(
@@ -126,6 +132,7 @@ class PDFTreeViewModel: TreeViewModel {
                 contentHash: hash,
                 thumbnailData: meta.thumbnailData
             )
+            item.sourceFilePath = sourceFilePath
             item.folder = targetFolder
             modelContext.insert(item)
             
@@ -161,16 +168,55 @@ class PDFTreeViewModel: TreeViewModel {
         
         selectedDetailItem = nil
         selectedFolder = allItemsFolder
+        folderRefreshCounter += 1
     }
     
     func extractMetadata(for item: PDFItem) {
         guard let pdfURL = item.pdfUrl else { return }
         let apiKey = UserDefaults.standard.string(forKey: "claudeAPIKey") ?? ""
         guard !apiKey.isEmpty else { return }
-        
+
         Task {
             await extractAIMetadata(for: item, from: pdfURL, apiKey: apiKey)
         }
+    }
+
+    /// Löscht die Originaldatei (z.B. aus dem Downloads-Ordner).
+    /// Gibt `true` zurück wenn erfolgreich, `false` wenn die Datei nicht (mehr) existiert.
+    @discardableResult
+    func deleteOriginalFile(for item: PDFItem) -> Bool {
+        guard let sourcePath = item.sourceFilePath else { return false }
+        let fileManager = FileManager.default
+        let url = URL(fileURLWithPath: sourcePath)
+        guard fileManager.fileExists(atPath: sourcePath) else {
+            item.sourceFilePath = nil
+            try? modelContext.save()
+            return false
+        }
+        do {
+            try fileManager.removeItem(at: url)
+            item.sourceFilePath = nil
+            try? modelContext.save()
+            return true
+        } catch {
+            print("⚠️ Originalfile löschen fehlgeschlagen: \(error.localizedDescription)")
+            return false
+        }
+    }
+
+    /// Verschiebt ein PDFItem in einen anderen Folder.
+    func moveItem(_ item: PDFItem, to folder: PDFFolder?) {
+        let targetFolder: PDFFolder? = folder?.isVirtual == true ? nil : folder
+        item.folder = targetFolder
+        try? modelContext.save()
+    }
+
+    /// Sucht ein PDFItem anhand seiner UUID.
+    func findItem(by id: UUID) -> PDFItem? {
+        let descriptor = FetchDescriptor<PDFItem>(
+            predicate: #Predicate<PDFItem> { $0.id == id }
+        )
+        return try? modelContext.fetch(descriptor).first
     }
     
     // MARK: - Private Helpers

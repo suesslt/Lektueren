@@ -12,10 +12,18 @@ struct PDFDetailView: View {
 
     @State private var isInspectorPresented: Bool = true
     @State private var cloudError: String? = nil
+    @State private var isVisible: Bool = true
 
     var body: some View {
         PDFKitView(url: item.pdfUrl)
+            .opacity(isVisible ? 1 : 0)
             .ignoresSafeArea(edges: .bottom)
+            .onChange(of: item.id) { _, _ in
+                isVisible = false
+                withAnimation(.easeIn(duration: 0.15)) {
+                    isVisible = true
+                }
+            }
             .navigationTitle(item.title ?? item.fileName)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -88,6 +96,7 @@ private struct iOSPDFView: UIViewRepresentable {
 
     func updateUIView(_ uiView: PDFView, context: Context) {
         if uiView.document?.documentURL != url {
+            uiView.document = nil
             uiView.document = PDFDocument(url: url)
         }
     }

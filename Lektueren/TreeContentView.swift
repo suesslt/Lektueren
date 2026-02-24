@@ -6,6 +6,7 @@
 //
 import SwiftUI
 import SwiftData
+import UniformTypeIdentifiers
 
 struct TreeContentView<VM: TreeViewModel>: View
 where VM.Folder: Hashable {
@@ -29,6 +30,23 @@ where VM.Folder: Hashable {
             }
             // Eindeutigen Identifier für jede Zeile, um korrekte Updates zu erzwingen
             .id(folder.id)
+            .dropDestination(for: String.self) { droppedItems, _ in
+                guard !folder.isVirtual,
+                      let pdfViewModel = viewModel as? PDFTreeViewModel,
+                      let pdfFolder = folder as? PDFFolder else {
+                    return false
+                }
+                var didMove = false
+                for itemIDString in droppedItems {
+                    guard let uuid = UUID(uuidString: itemIDString),
+                          let item = pdfViewModel.findItem(by: uuid) else { continue }
+                    pdfViewModel.moveItem(item, to: pdfFolder)
+                    didMove = true
+                }
+                return didMove
+            } isTargeted: { isTargeted in
+                // Optional: visuelles Feedback könnte hier ergänzt werden
+            }
         }
         .onAppear {
             // "Alle Lektüren" beim ersten Start automatisch auswählen
