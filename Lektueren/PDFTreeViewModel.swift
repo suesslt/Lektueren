@@ -96,14 +96,15 @@ class PDFTreeViewModel: TreeViewModel {
         }
     }
 
-    /// Progressiver Import: Jedes PDF wird einzeln importiert und gespeichert,
-    /// damit es sofort in der Liste erscheint. AI-Extraktion startet erst nach
-    /// Abschluss aller Imports.
+    /// Sequentieller Import: Pro PDF wird importiert, dann AI-Metadaten extrahiert,
+    /// dann Propositionen extrahiert, erst danach kommt das nächste PDF.
     private func performImport(from urls: [URL], into folder: PDFFolder?) async {
         let existingHashes = fetchExistingHashes()
         let targetFolder: PDFFolder? = folder?.isVirtual == true ? nil : folder
 
-        var importedItems: [(PDFItem, URL)] = []
+        let defaults = UserDefaults.standard
+        let enableAI = defaults.object(forKey: "enableAIExtraction") as? Bool ?? true
+        let apiKey = defaults.string(forKey: "claudeAPIKey") ?? ""
 
         for url in urls {
             guard url.startAccessingSecurityScopedResource() else { continue }
@@ -117,6 +118,7 @@ class PDFTreeViewModel: TreeViewModel {
                 continue
             }
 
+            // Phase 1: PDF importieren und sofort in der Liste anzeigen
             let fileName = url.lastPathComponent
             let fileSize = fileSizeString(for: url)
             let lastModified = (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate ?? Date()
@@ -154,24 +156,23 @@ class PDFTreeViewModel: TreeViewModel {
             try? modelContext.save()
             itemRefreshCounter += 1
 
-            if let pdfURL = item.pdfUrl {
-                importedItems.append((item, pdfURL))
-            }
-
             // UI-Thread freigeben, damit die Liste aktualisiert wird
             await Task.yield()
-        }
 
-        // Phase 2: AI-Extraktion sequenziell nach Abschluss aller Imports
-        let defaults = UserDefaults.standard
-        let enableAI = defaults.object(forKey: "enableAIExtraction") as? Bool ?? true
-        let apiKey = defaults.string(forKey: "claudeAPIKey") ?? ""
-
-        if enableAI && !apiKey.isEmpty {
-            for (item, pdfURL) in importedItems {
+            // Phase 2 + 3: AI-Extraktion (Metadaten + Propositionen) für dieses PDF
+            if enableAI && !apiKey.isEmpty, let pdfURL = item.pdfUrl {
                 item.isAIProcessing = true
+
+                // Metadaten-Extraktion
                 await extractAIMetadata(for: item, from: pdfURL, apiKey: apiKey)
+
+                // Proposition-Extraktion
+                await extractAIPropositions(for: item, from: pdfURL, apiKey: apiKey)
+
                 item.isAIProcessing = false
+                try? modelContext.save()
+                itemRefreshCounter += 1
+                await Task.yield()
             }
         }
     }
@@ -207,6 +208,7 @@ class PDFTreeViewModel: TreeViewModel {
         itemRefreshCounter += 1
     }
     
+    /// Manuelle AI-Extraktion: Metadaten + Propositionen neu erstellen.
     func extractMetadata(for item: PDFItem) {
         guard let pdfURL = item.pdfUrl else { return }
         let apiKey = UserDefaults.standard.string(forKey: "claudeAPIKey") ?? ""
@@ -215,7 +217,10 @@ class PDFTreeViewModel: TreeViewModel {
         Task {
             item.isAIProcessing = true
             await extractAIMetadata(for: item, from: pdfURL, apiKey: apiKey)
+            await extractAIPropositions(for: item, from: pdfURL, apiKey: apiKey)
             item.isAIProcessing = false
+            try? modelContext.save()
+            itemRefreshCounter += 1
         }
     }
 
@@ -279,7 +284,37 @@ class PDFTreeViewModel: TreeViewModel {
             item.aiKeywords = metadata.keywords
             try? modelContext.save()
         } catch {
-            print("❌ AI-Extraktion fehlgeschlagen: \(error.localizedDescription)")
+            print("❌ AI-Metadaten-Extraktion fehlgeschlagen: \(error.localizedDescription)")
+        }
+    }
+
+    private func extractAIPropositions(for item: PDFItem, from url: URL, apiKey: String) async {
+        do {
+            let claudeProps = try await ClaudeService.shared.extractPropositionsFromPDF(pdfURL: url, apiKey: apiKey)
+
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyy-MM-dd"
+            dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+
+            let pdfTitle = item.aiExtractedTitle ?? item.title ?? item.fileName
+
+            for cp in claudeProps {
+                let dateOfProp = cp.zeitpunkt.flatMap { dateFormatter.date(from: $0) }
+                let prop = Proposition(
+                    keyMessage: cp.kernaussage,
+                    subject: cp.subjekt,
+                    dateOfProposition: dateOfProp,
+                    source: cp.quelle ?? "",
+                    noteTitle: pdfTitle,
+                    pdfItem: item,
+                    importSource: .pdf
+                )
+                modelContext.insert(prop)
+            }
+            try? modelContext.save()
+            print("✅ [PDF Propositions] \(claudeProps.count) Propositionen aus '\(pdfTitle)' extrahiert")
+        } catch {
+            print("❌ AI-Proposition-Extraktion fehlgeschlagen: \(error.localizedDescription)")
         }
     }
 

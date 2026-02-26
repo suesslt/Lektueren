@@ -40,6 +40,10 @@ final class PDFItem: TreeItem {
 
     /// Pfad zur Originaldatei (z.B. Downloads-Ordner) — zum nachträglichen Löschen.
     var sourceFilePath: String?
+
+    /// Aus diesem PDF extrahierte Propositionen.
+    @Relationship(deleteRule: .nullify, inverse: \Proposition.pdfItem)
+    var propositions: [Proposition]? = []
     
     // MARK: - AI-Status (nicht persistiert)
     @Transient var isAIProcessing: Bool = false

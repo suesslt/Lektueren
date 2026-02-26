@@ -14,6 +14,8 @@ struct PDFManagerApp: App {
         let schema = Schema([
             PDFFolder.self,
             PDFItem.self,
+            Proposition.self,
+            FindingsReport.self,
         ])
         let modelConfiguration = ModelConfiguration(
             schema: schema,
@@ -29,7 +31,7 @@ struct PDFManagerApp: App {
 
     var body: some Scene {
         WindowGroup {
-            PDFRootView(modelContext: sharedModelContainer.mainContext)
+            AppRootView(modelContext: sharedModelContainer.mainContext)
         }
         .modelContainer(sharedModelContainer)
     }
@@ -38,20 +40,6 @@ struct PDFManagerApp: App {
         // Gibt beim App-Start Diagnoseinformationen zur iCloud-Anbindung aus.
         // Prüfe die Xcode-Konsole auf "[PDFCloudStorage]"-Zeilen.
         PDFCloudStorage.logDiagnostics()
-    }
-}
-/// Einstiegspunkt, der den ViewModel mit dem MainContext initialisiert.
-private struct PDFRootView: View {
-    @State private var viewModel: PDFTreeViewModel
-
-    init(modelContext: ModelContext) {
-        _viewModel = State(wrappedValue: PDFTreeViewModel(modelContext: modelContext))
-    }
-
-    var body: some View {
-        TripleColumnLayout(viewModel: viewModel) { item in
-            PDFDetailView(item: item)
-        }
     }
 }
 

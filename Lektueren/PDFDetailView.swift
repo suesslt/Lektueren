@@ -187,6 +187,46 @@ private struct PDFInspectorView: View {
                 }
             }
 
+            // MARK: Propositionen
+            if let propositions = item.propositions, !propositions.isEmpty {
+                Section("Propositionen (\(propositions.count))") {
+                    ForEach(propositions.sorted(by: { $0.subject < $1.subject })) { prop in
+                        VStack(alignment: .leading, spacing: 6) {
+                            // Kategorie-Tag
+                            HStack(spacing: 4) {
+                                Image(systemName: prop.subjectIcon)
+                                    .font(.caption2)
+                                Text(prop.subject)
+                                    .font(.caption)
+                            }
+                            .foregroundStyle(prop.subjectColor)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(prop.subjectColor.opacity(0.12), in: Capsule())
+
+                            // Kernaussage
+                            Text(prop.keyMessage)
+                                .font(.subheadline)
+
+                            // Quelle und Datum
+                            HStack(spacing: 6) {
+                                if !prop.source.isEmpty {
+                                    Text(prop.source)
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+                                }
+                                if let date = prop.dateOfProposition {
+                                    Text(date.formatted(date: .abbreviated, time: .omitted))
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+            }
+
             // MARK: Allgemein
             Section("Allgemein") {
                 if let author = item.author, !author.isEmpty {
