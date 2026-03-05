@@ -16,11 +16,13 @@ struct AppRootView: View {
     @State private var pdfViewModel: PDFTreeViewModel
     @State private var propositionViewModel: PropositionViewModel
     @State private var findingsReportViewModel: FindingsReportViewModel
+    @State private var cleanupViewModel: PropositionCleanupViewModel
 
     init(modelContext: ModelContext) {
         _pdfViewModel = State(wrappedValue: PDFTreeViewModel(modelContext: modelContext))
         _propositionViewModel = State(wrappedValue: PropositionViewModel(modelContext: modelContext))
         _findingsReportViewModel = State(wrappedValue: FindingsReportViewModel(modelContext: modelContext))
+        _cleanupViewModel = State(wrappedValue: PropositionCleanupViewModel(modelContext: modelContext))
     }
 
     var body: some View {
@@ -32,7 +34,8 @@ struct AppRootView: View {
 
             PropositionenSceneView(
                 propositionViewModel: propositionViewModel,
-                findingsReportViewModel: findingsReportViewModel
+                findingsReportViewModel: findingsReportViewModel,
+                cleanupViewModel: cleanupViewModel
             )
                 .tabItem {
                     Label("Propositionen", systemImage: "text.quote")

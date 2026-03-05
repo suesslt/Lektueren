@@ -27,8 +27,10 @@ enum PropositionSubSection: String, Hashable, CaseIterable {
 struct PropositionenSceneView: View {
     var propositionViewModel: PropositionViewModel
     var findingsReportViewModel: FindingsReportViewModel
+    var cleanupViewModel: PropositionCleanupViewModel
     @State private var columnVisibility = NavigationSplitViewVisibility.all
     @State private var showingSettings = false
+    @State private var showingCleanup = false
     @State private var selectedSubSection: PropositionSubSection = .propositionen
 
     var body: some View {
@@ -36,6 +38,13 @@ struct PropositionenSceneView: View {
             sidebarContent
                 .navigationTitle("Propositionen")
                 .toolbar {
+                    ToolbarItem(placement: .automatic) {
+                        Button {
+                            showingCleanup = true
+                        } label: {
+                            Label("Bereinigung", systemImage: "wand.and.stars")
+                        }
+                    }
                     ToolbarItem(placement: .automatic) {
                         Button {
                             showingSettings = true
@@ -46,6 +55,9 @@ struct PropositionenSceneView: View {
                 }
                 .sheet(isPresented: $showingSettings) {
                     SettingsView()
+                }
+                .sheet(isPresented: $showingCleanup) {
+                    PropositionCleanupView(viewModel: cleanupViewModel)
                 }
         } content: {
             contentColumn

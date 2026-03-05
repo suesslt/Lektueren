@@ -422,6 +422,123 @@ class ClaudeService {
         return markdown
     }
 
+    // MARK: - Proposition Cleanup Analysis
+
+    private static let cleanupPrompt = """
+    Du bist ein Experte für die Qualitätssicherung von Wissensdatenbanken.
+    Du erhältst eine nummerierte Liste von Kernaussagen (Propositionen) aus der Kategorie "{CATEGORY}".
+
+    Deine Aufgaben:
+    1. REDUNDANZ: Identifiziere Gruppen von inhaltlich gleichbedeutenden oder sehr ähnlichen Aussagen.
+       Wähle aus jeder Gruppe die präziseste und am besten formulierte Aussage als "Behalten"-Kandidat.
+       Nur echte inhaltliche Duplikate markieren, nicht bloss thematisch verwandte Aussagen.
+
+    2. QUALITÄT: Markiere Aussagen die:
+       - Trivial oder selbstverständlich sind
+       - Zu vage oder nicht falsifizierbar formuliert sind
+       - Nicht autark verständlich sind (Kontext fehlt)
+       - Keine substanzielle Erkenntnis enthalten
+
+    Antworte NUR mit folgendem JSON-Format (keine zusätzlichen Erklärungen):
+    {
+      "duplicateGroups": [
+        {
+          "keepIndex": 3,
+          "removeIndices": [7, 12],
+          "reason": "Kurze Begründung"
+        }
+      ],
+      "lowQuality": [
+        {
+          "index": 5,
+          "reason": "Kurze Begründung"
+        }
+      ]
+    }
+    Falls keine Duplikate oder Qualitätsprobleme gefunden werden, gib leere Arrays zurück.
+    """
+
+    /// Analysiert eine Gruppe von Propositionen auf Duplikate und Qualitätsprobleme.
+    func analyzePropositionsForCleanup(
+        propositions: [(index: Int, keyMessage: String)],
+        category: String,
+        apiKey: String
+    ) async throws -> CleanupAnalysisResult {
+        var urlRequest = URLRequest(url: apiURL)
+        urlRequest.httpMethod = "POST"
+        urlRequest.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+        urlRequest.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        urlRequest.timeoutInterval = 120
+
+        let systemPrompt = Self.cleanupPrompt.replacingOccurrences(of: "{CATEGORY}", with: category)
+
+        var inputText = "Kategorie: \(category)\nAnzahl: \(propositions.count)\n\n"
+        for (index, keyMessage) in propositions {
+            inputText += "[\(index)] \(keyMessage)\n"
+        }
+
+        let bodyDict: [String: Any] = [
+            "model": model,
+            "max_tokens": 4096,
+            "system": systemPrompt,
+            "messages": [
+                ["role": "user", "content": inputText]
+            ]
+        ]
+        urlRequest.httpBody = try JSONSerialization.data(withJSONObject: bodyDict)
+
+        print("🧹 [Claude AI] Cleanup-Analyse: \(category), \(propositions.count) Propositionen")
+
+        let (data, response) = try await URLSession.shared.data(for: urlRequest)
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw ClaudeServiceError.invalidResponse
+        }
+
+        guard httpResponse.statusCode == 200 else {
+            let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
+            throw ClaudeServiceError.apiError(statusCode: httpResponse.statusCode, message: errorBody)
+        }
+
+        let claudeResponse = try JSONDecoder().decode(ClaudeResponse.self, from: data)
+
+        guard let responseText = claudeResponse.content.first?.text else {
+            throw ClaudeServiceError.noContentInResponse
+        }
+
+        guard let jsonString = Self.extractJSONObject(from: responseText) else {
+            throw ClaudeServiceError.invalidJSON
+        }
+
+        let jsonData = Data(jsonString.utf8)
+        return try JSONDecoder().decode(CleanupAnalysisResult.self, from: jsonData)
+    }
+
+    /// Extrahiert ein JSON-Objekt aus Claude's Antwort (mit oder ohne Code-Block).
+    private static func extractJSONObject(from text: String) -> String? {
+        if let startRange = text.range(of: "```json"),
+           let contentStart = text.range(of: "\n", range: startRange.upperBound..<text.endIndex),
+           let endRange = text.range(of: "```", range: contentStart.upperBound..<text.endIndex) {
+            return String(text[contentStart.upperBound..<endRange.lowerBound])
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+
+        if let startRange = text.range(of: "```"),
+           let contentStart = text.range(of: "\n", range: startRange.upperBound..<text.endIndex),
+           let endRange = text.range(of: "```", range: contentStart.upperBound..<text.endIndex) {
+            return String(text[contentStart.upperBound..<endRange.lowerBound])
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+
+        if let start = text.firstIndex(of: "{"),
+           let end = text.lastIndex(of: "}") {
+            return String(text[start...end])
+        }
+
+        return nil
+    }
+
     /// Parst die JSON-Antwort von Claude.
     private func parseMetadataJSON(_ jsonString: String) throws -> ExtractedPDFMetadata {
         // JSON aus dem Text extrahieren (falls zusätzlicher Text vorhanden ist)
@@ -482,6 +599,36 @@ struct ClaudeProposition: Codable, Sendable {
         case zeitpunkt = "Zeitpunkt"
         case quelle = "Quelle"
     }
+}
+
+// MARK: - Cleanup Analysis Types
+
+struct CleanupAnalysisResult: Codable {
+    struct DuplicateGroup: Codable {
+        let keepIndex: Int
+        let removeIndices: [Int]
+        let reason: String
+    }
+    struct LowQualityItem: Codable {
+        let index: Int
+        let reason: String
+    }
+    let duplicateGroups: [DuplicateGroup]
+    let lowQuality: [LowQualityItem]
+}
+
+struct PropositionCleanupItem: Identifiable {
+    let id: UUID
+    let keyMessage: String
+    let subject: String
+    let reason: String
+    let type: CleanupItemType
+    let keepKeyMessage: String?
+}
+
+enum CleanupItemType {
+    case duplicate
+    case lowQuality
 }
 
 // MARK: - Errors
