@@ -58,3 +58,27 @@ PDFs are copied to iCloud Documents container (`iCloud.com.suessli.Lektueren`) w
 - Error enums implement `LocalizedError` with descriptive messages
 - AI-extracted fields prefixed with `ai` (e.g., `aiSummary`, `aiKeywords`)
 - SwiftData enums stored as raw values with `@Transient` computed typed accessors
+
+## Score Package — Shared Base Classes
+
+The [Score](../score) package (`import Score` / `import ScoreUI`) is a shared local SPM library providing financial and utility base types used across sibling projects. While this project does not currently depend on Score, the following types are available:
+
+| Type | Module | Description |
+|------|--------|-------------|
+| `Money` | Score | Currency-safe monetary amounts with `Decimal` precision. Arithmetic enforces matching currencies. |
+| `Currency` | Score | ISO 4217 enum with 180+ currencies, decimal places, and localized names. |
+| `Percent` | Score | Percentage as factor (e.g. `0.10` = 10%). |
+| `FXRate` | Score | Bid/ask exchange rates with conversion methods. |
+| `VATCalculation` | Score | VAT split (net/gross) with inclusive/exclusive handling. |
+| `YearMonth` | Score | Year-month value type for monthly periods. |
+| `DayCountRule` | Score | Financial day count conventions (ACT/360, ACT/365, 30/360). |
+| `ServicePipeline` | Score | Async middleware chain for service operations. |
+| `ServiceError` | Score | Typed errors (notFound, validation, businessRule, etc.). |
+| `CSVExportable` | Score | Protocol for CSV row export. |
+| `IBANValidator` | Score | ISO 13616 IBAN validation. |
+| `SCORReferenceGenerator` | Score | ISO 11649 creditor reference with Mod 97. |
+| `ErrorHandler` | ScoreUI | Observable error state management for SwiftUI. |
+| `PDFRenderer` | ScoreUI | UIKit-based PDF generation. |
+| `.errorAlert()` | ScoreUI | SwiftUI modifier for error alert presentation. |
+
+To add Score as a dependency, add a local package reference to `../score` in Xcode.
